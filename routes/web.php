@@ -65,5 +65,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/customers', [Admin\CustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/export', [Admin\CustomerController::class, 'export'])->name('customers.export');
         Route::get('/customers/{customer}', [Admin\CustomerController::class, 'show'])->name('customers.show');
+
+        Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [Admin\UserController::class, 'store'])->name('users.store');
+        Route::delete('/users/{user}', [Admin\UserController::class, 'destroy'])->name('users.destroy');
     });
 });

@@ -34,6 +34,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
             'settings' => [
                 'contact_email' => setting('contact_email', 'contact@stephane-ouattara.com'),
                 'contact_phone' => setting('contact_phone', '+225 07 48 78 81 33'),

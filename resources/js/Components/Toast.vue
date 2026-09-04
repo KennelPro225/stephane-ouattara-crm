@@ -5,19 +5,20 @@ import { usePage } from '@inertiajs/vue3'
 const page = usePage()
 const visible = ref(false)
 const message = ref('')
+const variant = ref('success')
 let timer
 
-watch(
-    () => page.props.flash?.success,
-    (value) => {
-        if (!value) return
-        message.value = value
-        visible.value = true
-        clearTimeout(timer)
-        timer = setTimeout(() => (visible.value = false), 5000)
-    },
-    { immediate: true }
-)
+function show(value, kind) {
+    if (!value) return
+    message.value = value
+    variant.value = kind
+    visible.value = true
+    clearTimeout(timer)
+    timer = setTimeout(() => (visible.value = false), 5000)
+}
+
+watch(() => page.props.flash?.success, (value) => show(value, 'success'), { immediate: true })
+watch(() => page.props.flash?.error, (value) => show(value, 'error'), { immediate: true })
 </script>
 
 <template>
@@ -32,9 +33,13 @@ watch(
                 v-if="visible && message"
                 role="status"
                 aria-live="polite"
-                class="fixed bottom-4 right-4 z-[60] flex max-w-sm items-start gap-3 rounded-md border border-white/30 bg-success/90 px-5 py-4 text-white shadow-elevated backdrop-blur-md"
+                class="fixed bottom-4 right-4 z-[60] flex max-w-sm items-start gap-3 rounded-md border border-white/30 px-5 py-4 text-white shadow-elevated backdrop-blur-md"
+                :class="variant === 'error' ? 'bg-danger/90' : 'bg-success/90'"
             >
-                <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <svg v-if="variant === 'error'" class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M12 22a10 10 0 110-20 10 10 0 010 20z" />
+                </svg>
+                <svg v-else class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.5L11.5 15 16 9.5M12 22a10 10 0 110-20 10 10 0 010 20z" />
                 </svg>
                 <p class="flex-1 text-sm font-medium leading-relaxed">{{ message }}</p>
