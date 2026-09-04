@@ -1,8 +1,9 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import InputError from '@/Components/InputError.vue'
 
-defineProps({
+const props = defineProps({
   customer: Object,
   sessions: Array,
 })
@@ -15,6 +16,26 @@ const statusBadges = {
 }
 const statusLabels = { pending: 'En attente', confirmed: 'Confirmée', completed: 'Terminée', cancelled: 'Annulée' }
 const sourceLabels = { website: 'Site web', referral: 'Recommandation', direct: 'Direct', social_media: 'Réseaux sociaux' }
+
+const customerStatusBadges = {
+  lead: 'bg-surface-hover text-ink-secondary',
+  prospect: 'badge-soft-info',
+  active: 'badge-soft-success',
+  inactive: 'badge-soft-warning',
+}
+
+function updateStatus(event) {
+  router.patch(route('admin.customers.update', props.customer.id), { status: event.target.value }, { preserveScroll: true })
+}
+
+const noteForm = useForm({ note: '' })
+
+function submitNote() {
+  noteForm.post(route('admin.customers.notes.store', props.customer.id), {
+    preserveScroll: true,
+    onSuccess: () => noteForm.reset('note'),
+  })
+}
 </script>
 
 <template>
@@ -42,12 +63,32 @@ const sourceLabels = { website: 'Site web', referral: 'Recommandation', direct: 
           <div class="flex justify-between gap-3"><dt class="text-ink-muted">Ville</dt><dd class="font-medium text-ink">{{ customer.city || '—' }}</dd></div>
           <div class="flex items-center justify-between gap-3">
             <dt class="text-ink-muted">Statut</dt>
-            <dd><span class="badge badge-soft-success capitalize">{{ customer.status }}</span></dd>
+            <dd>
+              <select :value="customer.status" @change="updateStatus"
+                class="rounded-md border border-line bg-surface px-2.5 py-1.5 text-xs font-semibold shadow-xs transition-all duration-150 focus:border-primary focus:shadow-focus-ring focus:ring-0"
+                :class="customerStatusBadges[customer.status]">
+                <option v-for="s in ['lead', 'prospect', 'active', 'inactive']" :key="s" :value="s">{{ s }}</option>
+              </select>
+            </dd>
           </div>
         </dl>
 
-        <div v-if="customer.notes" class="mt-6 rounded-md bg-surface-hover p-4 text-sm leading-relaxed text-ink-secondary">
-          {{ customer.notes }}
+        <!-- Notes -->
+        <div class="mt-6">
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-ink-muted">Notes</h3>
+          <div v-if="customer.notes" class="mt-2 max-h-64 overflow-y-auto whitespace-pre-line rounded-md bg-surface-hover p-4 text-sm leading-relaxed text-ink-secondary">
+            {{ customer.notes }}
+          </div>
+          <p v-else class="mt-2 text-sm text-ink-muted">Aucune note pour le moment.</p>
+
+          <form class="mt-3 space-y-2" @submit.prevent="submitNote">
+            <textarea v-model="noteForm.note" rows="3" placeholder="Ajouter une note…"
+              class="block w-full resize-y rounded-md border border-line bg-surface px-3 py-2 text-sm text-ink shadow-xs transition-all duration-150 placeholder:text-ink-muted focus:border-primary focus:shadow-focus-ring focus:ring-0"></textarea>
+            <InputError :message="noteForm.errors.note" />
+            <button type="submit" class="btn-secondary !py-2 !text-xs" :disabled="noteForm.processing || !noteForm.note.trim()">
+              Ajouter la note
+            </button>
+          </form>
         </div>
       </section>
 

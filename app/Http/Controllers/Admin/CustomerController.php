@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -37,6 +39,29 @@ class CustomerController extends Controller
             'customer' => $customer,
             'sessions' => $customer->sessions()->with('programme')->latest()->get(),
         ]);
+    }
+
+    public function update(Request $request, Customer $customer): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(Customer::STATUSES)],
+        ]);
+
+        $customer->update($validated);
+
+        return back()->with('success', 'Statut du client mis à jour.');
+    }
+
+    public function addNote(Request $request, Customer $customer): RedirectResponse
+    {
+        $validated = $request->validate([
+            'note' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $customer->appendNote($validated['note']);
+        $customer->save();
+
+        return back()->with('success', 'Note ajoutée.');
     }
 
     public function export(): StreamedResponse

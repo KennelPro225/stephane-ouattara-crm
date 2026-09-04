@@ -10,18 +10,21 @@ class SessionService
 {
     public function createBooking(array $data): Session
     {
-        $customer = Customer::updateOrCreate(
-            ['email' => strtolower($data['email'])],
-            [
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'phone' => $data['phone'],
-                'company' => $data['company'] ?? null,
-                'role' => $data['role'] ?? null,
-                'city' => $data['city'] ?? null,
-                'source' => 'website',
-            ]
-        );
+        $customer = Customer::firstOrNew(['email' => strtolower($data['email'])]);
+        $customer->fill([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'phone' => $data['phone'],
+            'company' => $data['company'] ?? null,
+            'role' => $data['role'] ?? null,
+            'city' => $data['city'] ?? null,
+            'source' => $customer->exists ? $customer->source : 'website',
+            'status' => $customer->exists ? $customer->status : Customer::STATUSES[0],
+        ]);
+        if (! empty($data['message'])) {
+            $customer->appendNote('Message de réservation : '.$data['message']);
+        }
+        $customer->save();
 
         $session = Session::create([
             'customer_id' => $customer->id,

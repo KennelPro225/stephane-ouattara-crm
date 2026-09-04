@@ -42,4 +42,14 @@ class Customer extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    /**
+     * Appends a timestamped entry to the notes log instead of overwriting it —
+     * notes used to be silently replaced on every repeat contact/booking.
+     */
+    public function appendNote(string $note): void
+    {
+        $entry = '['.now()->format('d/m/Y H:i').'] '.trim($note);
+        $this->notes = trim(implode("\n\n", array_filter([$this->notes, $entry])));
+    }
 }
