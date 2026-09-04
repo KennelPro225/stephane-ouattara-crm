@@ -152,7 +152,7 @@
 
     /* Badges ---------------------------------------------------------------- */
     .badge {
-        @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium;
+        @apply inline-flex items-center gap-1 rounded-full px-3 py-1 font-mono text-xs font-medium;
     }
     .badge-outline {
         @apply badge border border-line bg-transparent text-ink;

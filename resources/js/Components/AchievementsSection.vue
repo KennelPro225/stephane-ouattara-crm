@@ -63,7 +63,7 @@ const activeVideo = ref(null)
 
           <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line/50 pt-4">
             <div v-for="stat in programme.stats" :key="stat.label">
-              <p class="font-sans text-2xl font-extrabold text-gradient leading-none"><StatCounter :value="stat.value" /></p>
+              <p class="font-mono text-2xl font-bold tabular-nums text-gradient leading-none"><StatCounter :value="stat.value" /></p>
               <p class="mt-1 text-xs font-medium uppercase tracking-wide text-ink-muted">{{ stat.label }}</p>
             </div>
             <span class="badge badge-outline ml-auto">{{ programme.duration }}</span>

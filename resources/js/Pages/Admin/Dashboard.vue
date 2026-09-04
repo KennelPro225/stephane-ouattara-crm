@@ -46,7 +46,7 @@ function transition(booking, newStatus) {
       <DashboardCard title="En attente" :value="stats.pending_sessions" icon="clock" />
       <DashboardCard title="Clients" :value="stats.customers" icon="users" />
       <DashboardCard title="Programmes publiés" :value="stats.published_programmes" icon="book" />
-      <DashboardCard title="Conversion" :value="`${stats.conversion_rate}%`" icon="trend" />
+      <DashboardCard title="Conversion" :value="`${stats.conversion_rate}%`" icon="trend" :percent="stats.conversion_rate" />
     </div>
 
     <div class="mt-8 grid gap-8 xl:grid-cols-3">

@@ -3,6 +3,9 @@ defineProps({
   title: String,
   value: [String, Number],
   icon: String,
+  // Only pass a real percentage (e.g. a conversion rate) — the progress bar
+  // used to render a fixed 2/3 fill for every card regardless of the value.
+  percent: { type: Number, default: null },
 })
 
 const icons = {
@@ -19,7 +22,7 @@ const icons = {
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
         <p class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ title }}</p>
-        <p class="mt-2 font-sans text-3xl font-extrabold tracking-tight text-ink">{{ value }}</p>
+        <p class="mt-2 font-mono text-3xl font-bold tabular-nums tracking-tight text-ink">{{ value }}</p>
       </div>
       <span v-if="icon && icons[icon]" class="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-accent-gradient/10 text-accent">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -27,9 +30,8 @@ const icons = {
         </svg>
       </span>
     </div>
-    <!-- Barre de progression décorative -->
-    <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-line/50">
-      <div class="h-full w-2/3 rounded-full bg-primary-gradient" />
+    <div v-if="percent !== null" class="mt-4 h-1.5 overflow-hidden rounded-full bg-line/50">
+      <div class="h-full rounded-full bg-primary-gradient transition-all duration-350 ease-smooth" :style="{ width: `${Math.min(100, Math.max(0, percent))}%` }" />
     </div>
   </div>
 </template>
