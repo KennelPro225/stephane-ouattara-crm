@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Programme;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreSessionRequest extends FormRequest
 {
@@ -38,5 +40,20 @@ class StoreSessionRequest extends FormRequest
             'phone.regex' => 'Le numéro de téléphone n\'est pas valide.',
             'preferred_date.after_or_equal' => 'La date de session doit être aujourd\'hui ou plus tard.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator) {
+            $programmeId = $this->input('programme_id');
+            if (! $programmeId) {
+                return;
+            }
+
+            $programme = Programme::find($programmeId);
+            if ($programme && $programme->available_seats <= 0) {
+                $validator->errors()->add('programme_id', 'Ce programme est complet, merci de choisir une autre session.');
+            }
+        });
     }
 }

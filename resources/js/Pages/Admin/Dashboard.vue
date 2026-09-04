@@ -1,5 +1,5 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import DashboardCard from '@/Components/DashboardCard.vue'
 
@@ -18,6 +18,17 @@ const statusBadges = {
 
 const statusLabels = {
   pending: 'En attente', confirmed: 'Confirmée', completed: 'Terminée', cancelled: 'Annulée',
+}
+
+const nextActions = {
+  pending: [{ status: 'confirmed', label: 'Confirmer' }, { status: 'cancelled', label: 'Annuler' }],
+  confirmed: [{ status: 'completed', label: 'Terminer' }, { status: 'cancelled', label: 'Annuler' }],
+  completed: [],
+  cancelled: [],
+}
+
+function transition(booking, newStatus) {
+  router.patch(route('admin.sessions.update', booking.id), { status: newStatus }, { preserveScroll: true })
 }
 </script>
 
@@ -41,15 +52,19 @@ const statusLabels = {
     <div class="mt-8 grid gap-8 xl:grid-cols-3">
       <!-- Dernières réservations -->
       <section class="xl:col-span-2 animate-slide-up [animation-delay:100ms]">
-        <h2 class="font-sans text-lg font-bold text-ink">Dernières réservations</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="font-sans text-lg font-bold text-ink">Dernières réservations</h2>
+          <Link :href="route('admin.sessions.index')" class="text-sm font-semibold text-primary hover:text-accent">Voir tout →</Link>
+        </div>
         <div class="card mt-4 !p-0 overflow-hidden">
           <table class="min-w-full divide-y divide-line/50 text-sm">
             <thead class="bg-surface-hover text-left text-xs font-semibold uppercase tracking-wide text-ink-muted">
               <tr>
                 <th class="px-4 py-3">Client</th>
                 <th class="px-4 py-3">Programme</th>
-                <th class="px-4 py-3">Date souhaitée</th>
+                <th class="px-4 py-3 font-mono text-[11px] normal-case tracking-normal">Date souhaitée</th>
                 <th class="px-4 py-3">Statut</th>
+                <th class="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line/40">
@@ -59,7 +74,7 @@ const statusLabels = {
                   <p class="text-xs text-ink-muted">{{ booking.customer?.email }}</p>
                 </td>
                 <td class="px-4 py-3.5 text-ink-secondary">{{ booking.programme?.title || 'Session personnalisée' }}</td>
-                <td class="px-4 py-3.5 text-ink-secondary">{{ new Date(booking.preferred_date).toLocaleDateString('fr-FR') }}</td>
+                <td class="px-4 py-3.5 font-mono text-xs text-ink-secondary">{{ new Date(booking.preferred_date).toLocaleDateString('fr-FR') }}</td>
                 <td class="px-4 py-3.5">
                   <span :class="statusBadges[booking.status]" class="badge">
                     <span class="relative flex h-2 w-2">
@@ -69,9 +84,19 @@ const statusLabels = {
                     {{ statusLabels[booking.status] }}
                   </span>
                 </td>
+                <td class="px-4 py-3.5">
+                  <div class="flex flex-wrap gap-2">
+                    <button v-for="action in nextActions[booking.status]" :key="action.status" type="button"
+                      class="text-xs font-semibold text-primary hover:underline"
+                      @click="transition(booking, action.status)">
+                      {{ action.label }}
+                    </button>
+                    <span v-if="!nextActions[booking.status].length" class="text-xs text-ink-muted">—</span>
+                  </div>
+                </td>
               </tr>
               <tr v-if="!recentBookings.length">
-                <td colspan="4" class="px-4 py-10 text-center text-ink-muted">Aucune réservation pour le moment.</td>
+                <td colspan="5" class="px-4 py-10 text-center text-ink-muted">Aucune réservation pour le moment.</td>
               </tr>
             </tbody>
           </table>

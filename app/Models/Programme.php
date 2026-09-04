@@ -16,6 +16,13 @@ class Programme extends Model
 
     public const TYPES = ['individual', 'group', 'corporate', 'adolescents'];
 
+    /**
+     * available_seats must be appended: nothing else exposes booking capacity
+     * to the public programme pages / booking form, which rely on it to
+     * disable full sessions and to validate new bookings server-side.
+     */
+    protected $appends = ['available_seats'];
+
     protected $fillable = [
         'title',
         'slug',

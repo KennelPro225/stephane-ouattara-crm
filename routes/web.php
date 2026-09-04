@@ -62,6 +62,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             ->parameters(['programmes' => 'programme'])
             ->except(['show']);
 
+        Route::get('/sessions', [Admin\SessionController::class, 'index'])->name('sessions.index');
+        Route::patch('/sessions/{session}', [Admin\SessionController::class, 'update'])->name('sessions.update');
+
         Route::get('/customers', [Admin\CustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/export', [Admin\CustomerController::class, 'export'])->name('customers.export');
         Route::get('/customers/{customer}', [Admin\CustomerController::class, 'show'])->name('customers.show');

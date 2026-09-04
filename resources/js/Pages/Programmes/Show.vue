@@ -145,9 +145,12 @@ const coachBio = "Stéphane OUATTARA est coach certifié en développement perso
             </div>
           </dl>
 
-          <Link :href="route('reserver-une-session', { programme: programme.id })" class="btn-accent mt-7 w-full">
+          <Link v-if="programme.available_seats > 0" :href="route('reserver-une-session', { programme: programme.id })" class="btn-accent mt-7 w-full">
             Réserver cette session
           </Link>
+          <button v-else type="button" disabled class="btn-primary mt-7 w-full opacity-60" aria-disabled="true">
+            Complet — places épuisées
+          </button>
           <p class="mt-3 text-center text-xs text-ink-muted">Consultation découverte gratuite de 30 minutes.</p>
         </div>
       </aside>

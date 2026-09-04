@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Head, usePage, useForm } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
 import InputError from '@/Components/InputError.vue'
@@ -59,11 +59,27 @@ const form = useForm({
   message: '',
 })
 
+const step1Fields = ['type', 'first_name', 'last_name', 'email', 'phone', 'company', 'role']
+const step2Fields = ['programme_id', 'preferred_date', 'preferred_time', 'message']
+
 function submit() {
   form.post(route('sessions.store'), {
     onSuccess: () => form.reset(),
+    onError: (errors) => {
+      const keys = Object.keys(errors)
+      if (keys.some((k) => step1Fields.includes(k))) {
+        goToStep(1)
+      } else if (keys.some((k) => step2Fields.includes(k))) {
+        goToStep(2)
+      }
+    },
   })
 }
+
+const selectedProgrammeSeats = computed(() => {
+  if (!form.programme_id) return null
+  return props.programmes.find((p) => p.id == form.programme_id)?.available_seats ?? null
+})
 </script>
 
 <template>
@@ -172,6 +188,9 @@ function submit() {
                 </option>
               </select>
               <InputError :message="form.errors.programme_id" class="mt-2" />
+              <p v-if="selectedProgrammeSeats !== null" class="mt-2 font-mono text-xs" :class="selectedProgrammeSeats > 0 ? 'text-ink-muted' : 'text-danger'">
+                {{ selectedProgrammeSeats > 0 ? `${selectedProgrammeSeats} place(s) restante(s)` : 'Complet — choisissez une autre session ou une session personnalisée' }}
+              </p>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
               <div>

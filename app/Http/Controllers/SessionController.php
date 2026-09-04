@@ -17,7 +17,7 @@ class SessionController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('Sessions/Create', [
-            'programmes' => Programme::published()->orderBy('start_date')->get(['id', 'title', 'start_date', 'type']),
+            'programmes' => Programme::published()->orderBy('start_date')->get(['id', 'title', 'start_date', 'type', 'max_participants']),
             'types' => Session::TYPES,
             'selectedType' => in_array($request->query('type'), Session::TYPES) ? $request->query('type') : null,
             'selectedProgramme' => Programme::published()->find($request->query('programme'))?->id,
