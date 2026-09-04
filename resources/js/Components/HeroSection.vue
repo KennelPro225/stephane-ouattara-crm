@@ -1,10 +1,18 @@
 <script setup>
 import { ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 
 defineProps({
   portrait: { type: String, default: '/storage/content/hero-portrait.png' },
 })
+
+const page = usePage()
+const defaultHeroTitle = "J'aide les ados, les leaders et les entreprises à se reconnecter, à croire en eux et oser."
+const heroTitle = () => page.props.settings?.hero_title ?? defaultHeroTitle
+// The default headline keeps its hand-crafted underline/shimmer styling; a
+// custom title from the admin content editor renders as plain text instead.
+const isCustomHeroTitle = () => heroTitle() !== defaultHeroTitle
+const heroSubtitle = () => page.props.settings?.hero_subtitle ?? "Un potentiel pour chaque personne, une valeur sûre pour l'Afrique."
 
 // Parallaxe légère au mouvement de la souris
 const orbX = ref(0)
@@ -60,14 +68,17 @@ function scrollToAbout() {
           class="font-sans text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl animate-slide-up [animation-delay:120ms]"
           style="letter-spacing: -0.04em"
         >
-          J'aide les ados, les leaders et les entreprises à
-          <span class="relative inline-block text-accent-light">se reconnecter<svg class="absolute -bottom-1.5 left-0 w-full text-accent/70" height="6" preserveAspectRatio="none" viewBox="0 0 200 6" aria-hidden="true"><path d="M0 3 Q50 6 100 3 T200 3" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></span>, à
-          <span class="shimmer-text !text-white [background-image:linear-gradient(110deg,#fff_40%,#F5A76B_50%,#fff_60%)]">croire en eux</span> et
-          <span class="text-accent-light">oser</span>.
+          <template v-if="isCustomHeroTitle()">{{ heroTitle() }}</template>
+          <template v-else>
+            J'aide les ados, les leaders et les entreprises à
+            <span class="relative inline-block text-accent-light">se reconnecter<svg class="absolute -bottom-1.5 left-0 w-full text-accent/70" height="6" preserveAspectRatio="none" viewBox="0 0 200 6" aria-hidden="true"><path d="M0 3 Q50 6 100 3 T200 3" stroke="currentColor" stroke-width="2.5" fill="none"/></svg></span>, à
+            <span class="shimmer-text !text-white [background-image:linear-gradient(110deg,#fff_40%,#F5A76B_50%,#fff_60%)]">croire en eux</span> et
+            <span class="text-accent-light">oser</span>.
+          </template>
         </h1>
 
         <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/80 animate-slide-up [animation-delay:240ms]">
-          Un potentiel pour chaque personne, une valeur sûre pour l'Afrique.
+          {{ heroSubtitle() }}
         </p>
 
         <div class="mt-10 flex flex-col gap-4 sm:flex-row animate-slide-up [animation-delay:360ms]">

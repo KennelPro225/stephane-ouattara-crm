@@ -1,5 +1,8 @@
 <script setup>
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
+
+const page = usePage()
+const aboutText = () => page.props.settings?.about_text
 
 const credentials = [
   { label: 'Master en management des organisations', icon: 'M4.26 10.147a60.438 60.438 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.636 50.636 0 00-2.658-.813A59.906 59.906 0 0112 3.493a59.903 59.903 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0112 7.48c1.944 0 3.861.254 5.66.759' },
@@ -26,6 +29,7 @@ const engagements = [
           L'histoire d'un appel, le parcours d'un bâtisseur
         </h2>
         <p class="mt-3 text-lg font-medium text-primary">Quelle est l'histoire derrière mon parcours ?</p>
+        <p v-if="aboutText()" class="mt-4 text-lg leading-relaxed text-ink">{{ aboutText() }}</p>
 
         <div class="mt-6 space-y-4 leading-relaxed text-ink-secondary">
           <p>
