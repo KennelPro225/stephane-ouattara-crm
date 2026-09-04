@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/programmes', [ProgrammeController::class, 'index'])->name('programmes.index');
-Route::get('/programmes/{programme}', [ProgrammeController::class, 'show'])->name('programmes.show');
+Route::get('/programmes/{programme:slug}', [ProgrammeController::class, 'show'])->name('programmes.show');
 Route::get('/reserver-une-session', [BookingController::class, 'create'])->name('reserver-une-session');
 Route::post('/reserver-une-session', [BookingController::class, 'store'])->name('bookings.store');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact');

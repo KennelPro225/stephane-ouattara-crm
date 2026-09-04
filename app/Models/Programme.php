@@ -31,9 +31,9 @@ class Programme extends Model
     {
         return [
             'price_amount' => 'decimal:2',
-            'start_date' => 'date',
-            'end_date' => 'date',
-            'registration_deadline' => 'date',
+            'start_date' => 'date:Y-m-d',
+            'end_date' => 'date:Y-m-d',
+            'registration_deadline' => 'date:Y-m-d',
             'featured' => 'boolean',
         ];
     }
@@ -45,11 +45,6 @@ class Programme extends Model
                 $programme->slug = Str::slug($programme->title).'-'.Str::lower(Str::random(5));
             }
         });
-    }
-
-    public function getRouteKeyName(): string
-    {
-        return 'slug';
     }
 
     public function scopePublished(Builder $query): Builder
