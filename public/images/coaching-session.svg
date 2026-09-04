@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Session de coaching">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FEFDFB"/>
+      <stop offset="1" stop-color="#F5EADB"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" rx="0" fill="url(#bg2)"/>
+  <rect x="0" y="230" width="400" height="70" fill="#7C5A2F" opacity="0.12"/>
+  <!-- table -->
+  <ellipse cx="200" cy="245" rx="130" ry="16" fill="#E67E22" opacity="0.25"/>
+  <!-- person 1 -->
+  <g fill="#7C5A2F">
+    <circle cx="120" cy="130" r="34"/>
+    <path d="M120 170c-38 0-62 22-68 50l-4 30h144l-4-30c-6-28-30-50-68-50z"/>
+  </g>
+  <!-- person 2 -->
+  <g fill="#D4845C">
+    <circle cx="280" cy="125" r="36"/>
+    <path d="M280 168c-40 0-64 23-71 52l-4 30h150l-4-30c-7-29-31-52-71-52z"/>
+  </g>
+  <!-- speech bubbles -->
+  <rect x="150" y="52" width="86" height="40" rx="10" fill="#FFFFFF" stroke="#E8DDD0"/>
+  <path d="M175 92l-6 14 18-14z" fill="#FFFFFF" stroke="#E8DDD0"/>
+  <circle cx="172" cy="72" r="4" fill="#E67E22"/>
+  <circle cx="192" cy="72" r="4" fill="#F5A76B"/>
+  <circle cx="212" cy="72" r="4" fill="#E67E22"/>
+</svg>

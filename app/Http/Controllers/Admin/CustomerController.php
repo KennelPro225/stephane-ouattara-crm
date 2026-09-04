@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Customer;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+class CustomerController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        return Inertia::render('Admin/Customers/Index', [
+            'customers' => Customer::query()
+                ->withCount('sessions')
+                ->when($request->input('search'), function ($q, $s) {
+                    $q->where(fn ($qq) => $qq
+                        ->where('first_name', 'like', "%{$s}%")
+                        ->orWhere('last_name', 'like', "%{$s}%")
+                        ->orWhere('email', 'like', "%{$s}%"));
+                })
+                ->when($request->input('status'), fn ($q, $status) => $q->where('status', $status))
+                ->when($request->input('source'), fn ($q, $source) => $q->where('source', $source))
+                ->latest()
+                ->paginate(15)
+                ->withQueryString(),
+            'filters' => $request->only(['search', 'status', 'source']),
+        ]);
+    }
+
+    public function show(Customer $customer): Response
+    {
+        return Inertia::render('Admin/Customers/Show', [
+            'customer' => $customer,
+            'sessions' => $customer->sessions()->with('programme')->latest()->get(),
+        ]);
+    }
+
+    public function export(): StreamedResponse
+    {
+        $filename = 'clients-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Entreprise', 'Ville', 'Source', 'Statut', 'Sessions', 'Inscrit le']);
+
+            Customer::withCount('sessions')->chunk(200, function ($customers) use ($out) {
+                foreach ($customers as $c) {
+                    fputcsv($out, [
+                        $c->id, $c->first_name, $c->last_name, $c->email, $c->phone,
+                        $c->company, $c->city, $c->source, $c->status, $c->sessions_count, $c->created_at,
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+}

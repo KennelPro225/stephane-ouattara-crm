@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Teambuilding d'équipe">
+  <rect width="400" height="300" fill="#1A1410"/>
+  <circle cx="330" cy="50" r="90" fill="#E67E22" opacity="0.25"/>
+  <!-- raised hands / stars -->
+  <g fill="#F5A76B">
+    <path d="M60 210l14-46 14 46-14-10zM120 180l16-54 16 54-16-12zM186 196l15-50 15 50-15-11zM250 176l17-58 17 58-17-13zM316 204l14-46 14 46-14-10z"/>
+  </g>
+  <g fill="#FEFDFB">
+    <circle cx="74" cy="152" r="7"/>
+    <circle cx="136" cy="118" r="8"/>
+    <circle cx="201" cy="138" r="7"/>
+    <circle cx="267" cy="110" r="8"/>
+    <circle cx="330" cy="150" r="7"/>
+  </g>
+  <rect x="24" y="228" width="352" height="44" rx="10" fill="#FEFDFB"/>
+  <text x="200" y="256" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="700" fill="#7C5A2F">Ensemble, on va plus loin</text>
+</svg>
