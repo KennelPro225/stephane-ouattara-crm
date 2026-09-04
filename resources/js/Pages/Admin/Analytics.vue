@@ -54,7 +54,14 @@ const popularityData = computed(() => ({
   }],
 }))
 
-const typeLabels = { individual: 'Individuel', group: 'Groupe', corporate: 'Entreprise' }
+const typeLabels = {
+  individual: 'Individuel',
+  club_des_champions: 'Club des Champions',
+  group: 'Groupe',
+  corporate_wellness: 'Bien-être entreprise',
+  teambuilding: 'Teambuilding',
+  other: 'Autre',
+}
 const sourceLabels = { website: 'Site web', referral: 'Recommandation', direct: 'Direct', social_media: 'Réseaux sociaux' }
 
 const chartOptions = {
