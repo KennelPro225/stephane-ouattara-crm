@@ -8,8 +8,11 @@ createInertiaApp({
     resolve: (name) =>
         resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .mount(el);
+        const app = createApp({ render: () => h(App, props) });
+        // Ziggy's @routes blade directive defines window.route(); expose it as a
+        // global property so templates can call route(...) directly, matching
+        // how the ZiggyVue plugin would (this Ziggy version ships no Vue plugin).
+        app.config.globalProperties.route = window.route;
+        app.use(plugin).mount(el);
     },
 });

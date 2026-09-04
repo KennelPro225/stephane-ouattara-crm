@@ -37,7 +37,26 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            //
+            'auth' => [
+                'user' => $request->user(),
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'content' => [
+                'heroTitle' => setting('hero_title', "J'aide les ados, les leaders et les entreprises à se reconnecter, à croire en eux et oser"),
+                'tagline' => setting('tagline', 'Un potentiel pour chaque personne, une valeur sûre pour l’Afrique.'),
+                'ctaTitle' => setting('cta_title', "Commence dès aujourd'hui"),
+                'ctaText' => setting('cta_text', 'Assez réfléchi. Il est temps d’agir. Réserve ta première séance dès maintenant et commence ta transformation.'),
+                'email' => setting('contact_email', 'contact@stephane-ouattara.com'),
+                'phone' => setting('contact_phone', '+225 07 48 78 81 33'),
+                'hours' => setting('contact_hours', 'Lundi – Vendredi : 9h00 – 18h00'),
+                'hours2' => setting('contact_hours_2', 'Samedi : sur rendez-vous'),
+                'address' => setting('contact_address', 'Cabinet OMSY EDUC, Cocody, Abidjan, Côte d’Ivoire'),
+                'coverage' => setting('contact_coverage', 'Présentiel et en ligne — toute la Côte d’Ivoire et à l’international'),
+                'bio' => setting('footer_bio', "Stéphane OUATTARA est coach certifié en développement personnel, entrepreneur social et expert en autonomisation des jeunes. Fort de plus de 10 ans d'expérience, il accompagne jeunes, institutions et communautés vers l'impact durable."),
+            ],
         ];
     }
 }
