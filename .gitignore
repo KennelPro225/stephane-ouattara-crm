@@ -18,11 +18,9 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/database/*.sqlite
 /storage/*.key
 /storage/pail
-/stephane_ouattara_crm
-*.sqlite
-*.sqlite3
 /vendor
 _ide_helper.php
 Homestead.json

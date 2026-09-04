@@ -1,6 +1,8 @@
 <?php
 
-use App\Jobs\SendProgrammeReminder;
-use Illuminate\Support\Facades\Schedule;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
 
-Schedule::job(new SendProgrammeReminder)->daily()->at('08:00');
+Artisan::command('inspire', function () {
+    $this->comment(Inspiring::quote());
+})->purpose('Display an inspiring quote');
