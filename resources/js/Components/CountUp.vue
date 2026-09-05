@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   /** Any string like "200+", "1K+", "150 000 FCFA", "42.9 %" — the leading number animates, everything else is preserved. */
@@ -43,6 +43,7 @@ function formatNumber (n, decimals, groupSpaces) {
 let rafId = null
 let lastNumeric = 0
 let hasAppeared = false
+let observer = null
 
 function renderTo (rawValue, from) {
   const parsed = parse(rawValue)
@@ -68,10 +69,12 @@ function renderTo (rawValue, from) {
   rafId = requestAnimationFrame(tick)
 }
 
-let observer
-function setEl (node) {
-  el.value = node
-  if (!node) return
+// Runs exactly once per component instance (onMounted, not a function-ref —
+// a function-ref gets re-invoked on every patch of a v-for item, which used
+// to reset display back to "0" and re-arm an observer that could never fire
+// again since hasAppeared was already true, freezing the number at 0).
+onMounted(() => {
+  if (!el.value) return
 
   if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
     hasAppeared = true
@@ -91,14 +94,11 @@ function setEl (node) {
       observer.disconnect()
     }
   }, { threshold: 0.4 })
-  observer.observe(node)
-}
+  observer.observe(el.value)
+})
 
 // Re-animate whenever the underlying value changes after it has already
-// appeared once (e.g. an admin dashboard stat updating after an action) —
-// previously this component computed its target once at mount and never
-// looked at prop changes again, so numbers went stale/"stuck" after the
-// first render.
+// appeared once (e.g. an admin dashboard stat updating after an action).
 watch(() => props.value, (newVal) => {
   if (! hasAppeared) return
   renderTo(newVal, lastNumeric)
@@ -111,5 +111,5 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <span :ref="setEl">{{ display }}</span>
+  <span ref="el">{{ display }}</span>
 </template>
