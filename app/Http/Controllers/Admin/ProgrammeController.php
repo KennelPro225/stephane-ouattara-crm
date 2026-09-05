@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreProgrammeRequest;
 use App\Models\Programme;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -12,6 +13,8 @@ use Inertia\Response;
 
 class ProgrammeController extends Controller
 {
+    public function __construct(private ImageService $images) {}
+
     public function index(Request $request): Response
     {
         return Inertia::render('Admin/Programmes/Index', [
@@ -32,7 +35,14 @@ class ProgrammeController extends Controller
 
     public function store(StoreProgrammeRequest $request): RedirectResponse
     {
-        Programme::create($request->validated() + ['created_by' => $request->user()->id]);
+        $data = $request->validated();
+        unset($data['image']);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->images->store($request->file('image'), 'programmes');
+        }
+
+        Programme::create($data + ['created_by' => $request->user()->id]);
 
         return redirect()->route('admin.programmes.index')->with('success', 'Programme créé.');
     }
@@ -44,7 +54,14 @@ class ProgrammeController extends Controller
 
     public function update(StoreProgrammeRequest $request, Programme $programme): RedirectResponse
     {
-        $programme->update($request->validated());
+        $data = $request->validated();
+        unset($data['image']);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->images->replace($programme->image_path, $request->file('image'), 'programmes');
+        }
+
+        $programme->update($data);
 
         return redirect()->route('admin.programmes.index')->with('success', 'Programme mis à jour.');
     }

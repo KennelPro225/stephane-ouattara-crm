@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Programme extends Model
@@ -25,7 +26,7 @@ class Programme extends Model
         'featured', 'status', 'created_by',
     ];
 
-    protected $appends = ['available_seats'];
+    protected $appends = ['available_seats', 'image_url'];
 
     protected function casts(): array
     {
@@ -85,5 +86,10 @@ class Programme extends Model
     public function getAvailableSeatsAttribute(): int
     {
         return max(0, $this->max_participants - $this->confirmed_bookings_count);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
     }
 }

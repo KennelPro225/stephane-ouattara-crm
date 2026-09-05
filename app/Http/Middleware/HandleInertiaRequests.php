@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -56,7 +57,14 @@ class HandleInertiaRequests extends Middleware
                 'address' => setting('contact_address', 'Cabinet OMSY EDUC, Cocody, Abidjan, Côte d’Ivoire'),
                 'coverage' => setting('contact_coverage', 'Présentiel et en ligne — toute la Côte d’Ivoire et à l’international'),
                 'bio' => setting('footer_bio', "Stéphane OUATTARA est coach certifié en développement personnel, entrepreneur social et expert en autonomisation des jeunes. Fort de plus de 10 ans d'expérience, il accompagne jeunes, institutions et communautés vers l'impact durable."),
+                'heroImage' => $this->imageUrl(setting('hero_image_path')),
+                'coachImage' => $this->imageUrl(setting('coach_image_path')),
             ],
         ];
+    }
+
+    private function imageUrl(?string $path): ?string
+    {
+        return $path ? Storage::disk('public')->url($path) : null;
     }
 }

@@ -45,6 +45,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/contenus', [Admin\ContentController::class, 'index'])->name('content.index');
     Route::put('/contenus', [Admin\ContentController::class, 'updateSettings'])->name('content.update');
+    Route::post('/contenus/images', [Admin\ContentController::class, 'updateImages'])->name('content.images');
     Route::put('/contenus/testimonials/{testimonial}', [Admin\ContentController::class, 'updateTestimonial'])->name('testimonials.update');
     Route::put('/contenus/gallery/{gallery}', [Admin\ContentController::class, 'updateGallery'])->name('gallery.update');
 });

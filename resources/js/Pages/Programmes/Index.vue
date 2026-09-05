@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
+import PlaceholderMedia from '@/Components/PlaceholderMedia.vue'
 import { AUDIENCE_LABELS, TYPE_LABELS, audienceHue, audienceSoft, formatDate } from '@/constants'
 
 const props = defineProps({
@@ -67,10 +68,9 @@ watch([q, age, type, sort], () => {
       </p>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
-        <article v-for="p in programmes.data" :key="p.id" :style="{ border: '2px solid var(--color-text)', borderTop: `8px solid ${audienceHue(p.audience)}`, display: 'flex', flexDirection: 'column' }">
-          <div class="grayscale placeholder-media" style="aspect-ratio:16/9;border-bottom:2px solid var(--color-text)">
-            <span>photo programme</span>
-          </div>
+        <article v-for="(p, i) in programmes.data" :key="p.id" v-reveal="{ delay: (i % 6) * 70 }" class="edge-card" :style="{ border: '2px solid var(--color-text)', borderTop: `8px solid ${audienceHue(p.audience)}`, display: 'flex', flexDirection: 'column' }">
+          <PlaceholderMedia :src="p.image_url" aspect="16/9" border="2px solid var(--color-text)" label="photo programme" />
+
           <div style="padding:18px;display:flex;flex-direction:column;gap:10px;flex:1">
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <span class="tag" :style="{ background: audienceSoft(p.audience), color: audienceHue(p.audience) }">{{ AUDIENCE_LABELS[p.audience] }}</span>

@@ -31,6 +31,7 @@ class StoreProgrammeRequest extends FormRequest
             'max_participants' => ['required', 'integer', 'min:1'],
             'featured' => ['boolean'],
             'status' => ['required', Rule::in(Programme::STATUSES)],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ];
     }
 }

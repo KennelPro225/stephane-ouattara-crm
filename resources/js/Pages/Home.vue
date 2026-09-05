@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
 import PlaceholderMedia from '@/Components/PlaceholderMedia.vue'
+import CountUp from '@/Components/CountUp.vue'
 import { HUES, HUES_SOFT, audienceHue, formatDate } from '@/constants'
 
 const props = defineProps({
@@ -67,11 +68,11 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
             </div>
             <p class="text-muted" style="margin:36px 0 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase">↓ Scroll for more</p>
           </div>
-          <PlaceholderMedia aspect="4/5" label="portrait pro — stéphane ouattara" />
+          <PlaceholderMedia :src="content.heroImage" aspect="4/5" label="portrait pro — stéphane ouattara" />
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border-top:2px solid var(--color-divider);margin-top:48px">
-          <div v-for="(s, i) in heroStats" :key="s.l" :style="{ padding: '20px 16px 20px 0', borderRight: '1px solid var(--color-divider)', borderTop: `4px solid ${HUES[i % 4]}`, marginTop: '-2px' }">
-            <p style="font-family:var(--font-heading);font-weight:800;font-size:28px;margin:0">{{ s.n }}</p>
+          <div v-for="(s, i) in heroStats" :key="s.l" v-reveal="{ delay: i * 90 }" :style="{ padding: '20px 16px 20px 0', borderRight: '1px solid var(--color-divider)', borderTop: `4px solid ${HUES[i % 4]}`, marginTop: '-2px' }">
+            <p style="font-family:var(--font-heading);font-weight:800;font-size:28px;margin:0"><CountUp :value="s.n" /></p>
             <p class="text-muted" style="margin:0;font-size:11px;letter-spacing:0.08em;text-transform:uppercase">{{ s.l }}</p>
           </div>
         </div>
@@ -80,14 +81,14 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
       <section id="apropos" class="container-site" style="padding-top:64px">
         <p style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--c3);margin:0 0 20px">02 — Qui suis-je ?</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px">
-          <div>
+          <div v-reveal>
             <h2 style="font-size:clamp(26px,4.4vw,42px);margin:0 0 12px">L'histoire d'un appel, le parcours d'un bâtisseur</h2>
             <p style="font-size:15px;color:var(--color-neutral-700);margin:0 0 24px">Quelle est l'histoire derrière mon parcours ?</p>
             <p>Depuis plus de dix ans, j'accompagne celles et ceux qui cherchent à se révéler. Ce parcours a commencé en Côte d'Ivoire, dans un environnement où le potentiel est partout mais où les cadres pour le faire grandir manquent souvent.</p>
             <p>J'ai construit ma pratique auprès des adolescents, des professionnels en transition et des leaders qui veulent aligner performance et sens. Chaque accompagnement part du même principe : la transformation personnelle précède la transformation collective.</p>
             <p>Ce que j'ai traversé, appris et expérimenté — de la formation à l'incubation, de la stratégie à la communication d'influence — devient matière à transmettre.</p>
           </div>
-          <div style="display:flex;flex-direction:column;gap:32px">
+          <div v-reveal="{ delay: 120 }" style="display:flex;flex-direction:column;gap:32px">
             <div>
               <h6 style="margin:0 0 12px">Diplômes &amp; certifications</h6>
               <p v-for="c in credentials" :key="c" style="margin:0;padding:12px 0;border-bottom:1px solid var(--color-divider);font-size:14px">{{ c }}</p>
@@ -104,7 +105,7 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
         <p style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--c2);margin:0 0 20px">03 — Mes valeurs</p>
         <h2 style="font-size:clamp(26px,4.4vw,42px);margin:0 0 32px">Mes valeurs</h2>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px;background:var(--color-bg)">
-          <div v-for="(v, i) in values" :key="v.num" :style="{ background: HUES_SOFT[i % 4], boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `6px solid ${HUES[i % 4]}`, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }">
+          <div v-for="(v, i) in values" :key="v.num" v-reveal="{ delay: i * 80 }" :style="{ background: HUES_SOFT[i % 4], boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `6px solid ${HUES[i % 4]}`, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }">
             <span :style="{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '13px', color: HUES[i % 4] }">{{ v.num }}</span>
             <h3 style="margin:0;font-size:22px">{{ v.title }}</h3>
             <p style="margin:0;font-size:13px;line-height:1.65;color:var(--color-neutral-800)">{{ v.text }}</p>
@@ -125,8 +126,8 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
         <h2 style="font-size:clamp(26px,4.4vw,42px);margin:0 0 8px">Nos Programmes Phares</h2>
         <p class="text-muted" style="margin:0 0 32px;font-size:14px">Découvrez nos programmes transformationnels et leurs impacts</p>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px">
-          <article v-for="f in flagship" :key="f.id" :style="{ border: '2px solid var(--color-text)', borderTop: `8px solid ${audienceHue(f.audience)}`, display: 'flex', flexDirection: 'column' }">
-            <PlaceholderMedia aspect="16/10" border="2px solid var(--color-text)" />
+          <article v-for="(f, i) in flagship" :key="f.id" v-reveal="{ delay: i * 100 }" class="edge-card" :style="{ border: '2px solid var(--color-text)', borderTop: `8px solid ${audienceHue(f.audience)}`, display: 'flex', flexDirection: 'column' }">
+            <PlaceholderMedia :src="f.image_url" aspect="16/10" border="2px solid var(--color-text)" />
             <div style="padding:20px;display:flex;flex-direction:column;gap:12px;flex:1">
               <h3 style="margin:0;font-size:22px">{{ f.title }}</h3>
               <p style="margin:0;font-size:13px;line-height:1.65;flex:1">{{ f.description }}</p>
@@ -149,8 +150,8 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
           <h3 style="margin:0 0 6px;font-size:clamp(20px,3vw,28px)">Galerie de Réalisations</h3>
           <p class="text-muted" style="margin:0 0 20px;font-size:13px">Quelques moments forts de mes accompagnements</p>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;background:var(--color-bg)">
-            <figure v-for="(g, i) in gallery" :key="g.id" style="background:var(--color-bg);box-shadow:0 0 0 1px var(--color-divider)">
-              <PlaceholderMedia aspect="4/3" :label="g.slot_label" />
+            <figure v-for="(g, i) in gallery" :key="g.id" v-reveal="{ delay: (i % 3) * 90 }" style="background:var(--color-bg);box-shadow:0 0 0 1px var(--color-divider)">
+              <PlaceholderMedia :src="g.image_url" aspect="4/3" :label="g.slot_label" />
               <figcaption :style="{ padding: '10px', color: 'var(--color-text)', fontSize: '13px', borderTop: `4px solid ${HUES[i % 4]}` }">
                 <strong>{{ g.title }}</strong><br><span class="text-muted">{{ g.subtitle }}</span>
               </figcaption>
@@ -166,7 +167,7 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
           <p style="font-size:14px;line-height:1.75;margin:0">J'accompagne les personnes, les équipes et les organisations dans leur transformation intérieure et structurelle. Mon approche allie écoute profonde, expériences concrètes et outils puissants.</p>
         </div>
         <div style="border-top:2px solid var(--color-divider)">
-          <div v-for="(s, i) in services" :key="s.num" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;padding:28px 0;border-bottom:1px solid var(--color-divider)">
+          <div v-for="(s, i) in services" :key="s.num" v-reveal="{ delay: i * 70 }" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;padding:28px 0;border-bottom:1px solid var(--color-divider)">
             <div :style="{ borderTop: `6px solid ${HUES[i % 4]}`, paddingTop: '12px' }">
               <span :style="{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '13px', color: HUES[i % 4] }">{{ s.num }}</span>
               <h3 style="margin:8px 0 0;font-size:24px">{{ s.title }}</h3>
@@ -186,17 +187,21 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
       <section v-if="testimonials.length" class="container-site" style="padding-top:64px">
         <p style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent-700);margin:0 0 20px">06 — Témoignages de clients</p>
         <h2 style="font-size:clamp(26px,4.4vw,42px);margin:0 0 32px">Ce qu'ils disent de moi</h2>
-        <div style="border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text);padding:32px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:start">
-          <blockquote style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:clamp(20px,3.2vw,30px);line-height:1.25">“{{ current.quote }}”</blockquote>
-          <div>
-            <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:16px">{{ current.name }}</p>
-            <p class="text-muted" style="margin:2px 0 20px;font-size:13px">{{ current.role }}</p>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button type="button" class="btn btn-secondary btn-icon" aria-label="Précédent" @click="ti = (ti - 1 + testimonials.length) % testimonials.length">←</button>
-              <button type="button" class="btn btn-secondary btn-icon" aria-label="Suivant" @click="ti = (ti + 1) % testimonials.length">→</button>
-              <span class="text-muted" style="font-size:12px;margin-left:8px">{{ (ti % testimonials.length) + 1 }} / {{ testimonials.length }}</span>
+        <div style="border-top:2px solid var(--color-text);border-bottom:2px solid var(--color-text);padding:32px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:start;overflow:hidden;position:relative">
+          <Transition name="slide-fade" mode="out-in">
+            <blockquote :key="ti" style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:clamp(20px,3.2vw,30px);line-height:1.25">“{{ current.quote }}”</blockquote>
+          </Transition>
+          <Transition name="slide-fade" mode="out-in">
+            <div :key="ti">
+              <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:16px">{{ current.name }}</p>
+              <p class="text-muted" style="margin:2px 0 20px;font-size:13px">{{ current.role }}</p>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button type="button" class="btn btn-secondary btn-icon" aria-label="Précédent" @click="ti = (ti - 1 + testimonials.length) % testimonials.length">←</button>
+                <button type="button" class="btn btn-secondary btn-icon" aria-label="Suivant" @click="ti = (ti + 1) % testimonials.length">→</button>
+                <span class="text-muted" style="font-size:12px;margin-left:8px">{{ (ti % testimonials.length) + 1 }} / {{ testimonials.length }}</span>
+              </div>
             </div>
-          </div>
+          </Transition>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:2px;background:var(--color-bg);margin-top:2px">
           <button v-for="(t, i) in testimonials" :key="t.id" type="button"

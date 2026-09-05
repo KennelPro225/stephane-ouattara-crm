@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
@@ -8,6 +9,8 @@ const props = defineProps({
   method: { type: String, default: 'post' },
   title: { type: String, required: true },
 })
+
+const imagePreview = ref(props.programme?.image_url ?? null)
 
 const form = useForm({
   title: props.programme?.title ?? '',
@@ -25,13 +28,23 @@ const form = useForm({
   max_participants: props.programme?.max_participants ?? 20,
   featured: props.programme?.featured ?? false,
   status: props.programme?.status ?? 'draft',
+  image: null,
 })
 
+function onImageChange (event) {
+  const file = event.target.files[0]
+  if (file) {
+    form.image = file
+    imagePreview.value = URL.createObjectURL(file)
+  }
+}
+
 function submit () {
+  const options = { forceFormData: true }
   if (props.method === 'put') {
-    form.put(props.submitRoute)
+    form.put(props.submitRoute, options)
   } else {
-    form.post(props.submitRoute)
+    form.post(props.submitRoute, options)
   }
 }
 </script>
@@ -45,6 +58,21 @@ function submit () {
         <label for="title">Titre</label>
         <input id="title" v-model="form.title" class="input" type="text">
         <p v-if="form.errors.title" class="field-error">{{ form.errors.title }}</p>
+      </div>
+
+      <div class="field">
+        <label for="image">Photo du programme</label>
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+          <div class="grayscale placeholder-media" style="width:160px;aspect-ratio:4/3;flex:none" :style="imagePreview ? 'background:none;filter:none' : ''">
+            <img v-if="imagePreview" :src="imagePreview" alt="" style="width:100%;height:100%;object-fit:cover">
+            <span v-else>aperçu</span>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <input id="image" class="input" type="file" accept="image/png,image/jpeg,image/webp" @change="onImageChange">
+            <p class="text-muted" style="margin:6px 0 0;font-size:11px">JPG, PNG ou WEBP, 4 Mo maximum.</p>
+            <p v-if="form.errors.image" class="field-error">{{ form.errors.image }}</p>
+          </div>
+        </div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
@@ -132,7 +160,7 @@ function submit () {
       </label>
 
       <div style="display:flex;gap:12px;border-top:2px solid var(--color-divider);padding-top:20px">
-        <button type="submit" class="btn btn-primary" :disabled="form.processing">Enregistrer</button>
+        <button type="submit" class="btn btn-primary" style="min-width:140px" :class="{ 'btn-loading': form.processing }" :disabled="form.processing">Enregistrer</button>
       </div>
     </form>
   </AdminLayout>

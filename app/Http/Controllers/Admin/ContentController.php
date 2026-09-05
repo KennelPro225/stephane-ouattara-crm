@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\GalleryItem;
 use App\Models\Testimonial;
+use App\Services\ImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ContentController extends Controller
 {
+    public function __construct(private ImageService $images) {}
+
     public function index(): Response
     {
         return Inertia::render('Admin/Contenus/Index', [
@@ -27,6 +31,10 @@ class ContentController extends Controller
                 'contact_address' => setting('contact_address'),
                 'contact_coverage' => setting('contact_coverage'),
                 'footer_bio' => setting('footer_bio'),
+            ],
+            'images' => [
+                'hero_image' => $this->imageUrl(setting('hero_image_path')),
+                'coach_image' => $this->imageUrl(setting('coach_image_path')),
             ],
             'testimonials' => Testimonial::orderBy('sort_order')->get(),
             'gallery' => GalleryItem::orderBy('sort_order')->get(),
@@ -56,6 +64,24 @@ class ContentController extends Controller
         return back()->with('success', 'Contenus mis à jour.');
     }
 
+    public function updateImages(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'hero_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'coach_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        if ($request->hasFile('hero_image')) {
+            set_setting('hero_image_path', $this->images->replace(setting('hero_image_path'), $validated['hero_image'], 'site'));
+        }
+
+        if ($request->hasFile('coach_image')) {
+            set_setting('coach_image_path', $this->images->replace(setting('coach_image_path'), $validated['coach_image'], 'site'));
+        }
+
+        return back()->with('success', 'Images mises à jour.');
+    }
+
     public function updateTestimonial(Request $request, Testimonial $testimonial): RedirectResponse
     {
         $validated = $request->validate([
@@ -75,10 +101,21 @@ class ContentController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $this->images->replace($gallery->image_path, $validated['image'], 'gallery');
+        }
+        unset($validated['image']);
 
         $gallery->update($validated);
 
         return back()->with('success', 'Élément de galerie mis à jour.');
+    }
+
+    private function imageUrl(?string $path): ?string
+    {
+        return $path ? Storage::disk('public')->url($path) : null;
     }
 }

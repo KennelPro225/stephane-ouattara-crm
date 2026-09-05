@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, usePage } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
 import PlaceholderMedia from '@/Components/PlaceholderMedia.vue'
 import { AUDIENCE_LABELS, TYPE_LABELS, audienceHue, audienceSoft, formatDate } from '@/constants'
@@ -10,6 +10,8 @@ const props = defineProps({
   testimonials: Array,
   gallery: Array,
 })
+
+const page = usePage()
 
 const bar = computed(() => audienceHue(props.programme.audience))
 const tagBg = computed(() => audienceSoft(props.programme.audience))
@@ -44,7 +46,8 @@ const facts = computed(() => [
   </Head>
   <PublicLayout>
     <main>
-      <div class="grayscale placeholder-media" :style="{ height: 'clamp(200px,38vw,380px)', borderBottom: `8px solid ${bar}` }">
+      <img v-if="programme.image_url" :src="programme.image_url" alt="" :style="{ width: '100%', height: 'clamp(200px,38vw,380px)', objectFit: 'cover', borderBottom: `8px solid ${bar}`, display: 'block' }">
+      <div v-else class="grayscale placeholder-media" :style="{ height: 'clamp(200px,38vw,380px)', borderBottom: `8px solid ${bar}` }">
         <span>bannière programme</span>
       </div>
       <div class="container-site" style="padding-top:28px">
@@ -95,7 +98,7 @@ const facts = computed(() => [
             </div>
             <div>
               <h6 style="margin:0 0 12px">Le coach</h6>
-              <PlaceholderMedia aspect="1/1" />
+              <PlaceholderMedia :src="page.props.content.coachImage" aspect="1/1" />
               <p style="margin:12px 0 0;font-family:var(--font-heading);font-weight:800;font-size:15px">Stéphane Ouattara</p>
               <p class="text-muted" style="margin:2px 0 8px;font-size:12px">Coach certifié FranklinCovey · Alumni IVLP · ASPI Stanford</p>
               <p style="margin:0;font-size:13px;line-height:1.65">Plus de 10 ans d'accompagnement des jeunes, des professionnels et des organisations en Côte d'Ivoire et à l'international.</p>
@@ -115,7 +118,7 @@ const facts = computed(() => [
         <template v-if="gallery.length">
           <h3 style="font-size:20px;margin:0 0 12px">Galerie du programme</h3>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:2px;background:var(--color-bg);margin-bottom:40px">
-            <PlaceholderMedia v-for="g in gallery" :key="g.id" aspect="4/3" :label="g.slot_label" />
+            <PlaceholderMedia v-for="g in gallery" :key="g.id" :src="g.image_url" aspect="4/3" :label="g.slot_label" />
           </div>
         </template>
       </div>
