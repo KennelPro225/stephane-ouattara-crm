@@ -22,7 +22,9 @@ watch(() => page.props.flash?.error, (value) => show(value, 'error'), { immediat
 </script>
 
 <template>
-  <div v-if="visible && message" class="toast" :class="{ 'toast-error': variant === 'error' }" role="status" aria-live="polite">
-    {{ message }}
-  </div>
+  <Transition name="toast">
+    <div v-if="visible && message" class="toast" :class="{ 'toast-error': variant === 'error' }" role="status" aria-live="polite">
+      {{ message }}
+    </div>
+  </Transition>
 </template>

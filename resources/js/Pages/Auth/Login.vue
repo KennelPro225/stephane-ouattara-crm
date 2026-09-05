@@ -28,7 +28,7 @@ function submit () {
       <label class="radio" style="margin-bottom:20px">
         <input v-model="form.remember" type="checkbox"><span class="dot" style="border-radius:2px"></span>Se souvenir de moi
       </label>
-      <button type="submit" class="btn btn-primary btn-block" :disabled="form.processing">Se connecter</button>
+      <button type="submit" class="btn btn-primary btn-block" :class="{ 'btn-loading': form.processing }" :disabled="form.processing">Se connecter</button>
       <a href="/" style="display:block;margin-top:20px;font-size:13px;text-align:center">← Retour au site</a>
     </form>
   </div>

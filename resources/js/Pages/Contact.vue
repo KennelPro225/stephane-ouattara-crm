@@ -53,7 +53,7 @@ const blocks = computed(() => [
 
       <h2 style="margin:48px 0 24px;font-size:clamp(24px,4vw,36px)">Témoignages de clients</h2>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;background:var(--color-bg)">
-        <div v-for="(t, i) in testimonials" :key="t.id" :style="{ background: 'var(--color-bg)', boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `4px solid ${HUES[i % 4]}`, padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }">
+        <div v-for="(t, i) in testimonials" :key="t.id" v-reveal="{ delay: (i % 4) * 80 }" :style="{ background: 'var(--color-bg)', boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `4px solid ${HUES[i % 4]}`, padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }">
           <p style="margin:0;font-size:13px;line-height:1.7;flex:1">“{{ t.quote }}”</p>
           <div style="border-top:1px solid var(--color-divider);padding-top:10px">
             <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:13px">{{ t.name }}</p>

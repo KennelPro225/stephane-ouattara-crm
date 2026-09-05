@@ -1,6 +1,7 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import CountUp from '@/Components/CountUp.vue'
 import { BOOKING_STATUS_LABELS, BOOKING_STATUS_TAGS, HUES, formatDate } from '@/constants'
 
 const props = defineProps({
@@ -28,9 +29,9 @@ function confirm (booking) {
         { label: 'Clients', value: stats.customers },
         { label: 'Programmes actifs', value: stats.activeProgrammes },
         { label: 'Taux de conversion', value: `${stats.conversionRate} %` },
-      ]" :key="s.label" :style="{ background: 'var(--color-bg)', boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `5px solid ${HUES[i % 4]}`, padding: '18px' }">
+      ]" :key="s.label" v-reveal="{ delay: i * 70 }" :style="{ background: 'var(--color-bg)', boxShadow: '0 0 0 1px var(--color-divider)', borderTop: `5px solid ${HUES[i % 4]}`, padding: '18px' }">
         <p class="text-muted" style="margin:0 0 6px;font-size:10px;letter-spacing:0.1em;text-transform:uppercase">{{ s.label }}</p>
-        <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:30px">{{ s.value }}</p>
+        <p style="margin:0;font-family:var(--font-heading);font-weight:800;font-size:30px"><CountUp :value="s.value" /></p>
       </div>
     </div>
 

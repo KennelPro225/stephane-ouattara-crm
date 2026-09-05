@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import Toast from '@/Components/Toast.vue'
+import RouteProgress from '@/Components/RouteProgress.vue'
 
 const page = usePage()
 const drawer = ref(false)
@@ -19,6 +20,7 @@ function closeDrawer () {
 
 <template>
   <div style="min-height:100vh;font-family:var(--font-body)">
+    <RouteProgress />
     <header style="position:sticky;top:0;z-index:30;background:var(--color-bg);border-bottom:2px solid var(--color-divider)">
       <div class="container-site" style="display:flex;align-items:center;gap:20px;padding:14px 20px">
         <Link :href="route('home')" style="text-decoration:none;color:inherit;font-family:var(--font-heading);font-weight:800;font-size:15px;letter-spacing:0.06em;text-transform:uppercase;margin-right:auto;line-height:1.1">
@@ -49,8 +51,10 @@ function closeDrawer () {
       </div>
     </header>
 
+    <Transition name="fade">
     <div v-if="drawer" style="position:fixed;inset:0;z-index:40;display:flex;justify-content:flex-end;background:color-mix(in srgb, var(--color-neutral-900) 55%, transparent)" @click.self="closeDrawer">
-      <aside style="width:min(340px,86vw);background:var(--color-bg);border-left:2px solid var(--color-text);padding:20px;display:flex;flex-direction:column;gap:4px;animation:slidein .22s ease-out">
+      <Transition name="drawer" appear>
+      <aside style="width:min(340px,86vw);background:var(--color-bg);border-left:2px solid var(--color-text);padding:20px;display:flex;flex-direction:column;gap:4px">
         <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:2px solid var(--color-divider)">
           <span class="text-muted" style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase">Menu</span>
           <button class="btn-icon" style="background:transparent;border:1px solid var(--color-divider);cursor:pointer;font-size:18px;font-family:var(--font-heading)" aria-label="Fermer" @click="closeDrawer">×</button>
@@ -66,7 +70,9 @@ function closeDrawer () {
         <Link :href="route('reserver-une-session')" class="btn btn-primary btn-block" style="margin-top:12px" @click="closeDrawer">Réserver une session</Link>
         <p class="text-muted" style="margin-top:auto;font-size:11px;line-height:1.6">Cabinet OMSY EDUC — Cocody, Abidjan<br>{{ page.props.content.phone }}</p>
       </aside>
+      </Transition>
     </div>
+    </Transition>
 
     <slot />
 

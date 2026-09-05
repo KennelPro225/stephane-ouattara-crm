@@ -123,7 +123,7 @@ function resetForm () {
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-top:2px solid var(--color-divider);padding-top:20px">
-            <button type="submit" class="btn btn-primary" :disabled="form.processing">Envoyer ma demande</button>
+            <button type="submit" class="btn btn-primary" style="min-width:180px" :class="{ 'btn-loading': form.processing }" :disabled="form.processing">Envoyer ma demande</button>
             <span class="text-muted" style="font-size:12px">Réponse sous 24 h ouvrées</span>
           </div>
         </form>
