@@ -9,18 +9,23 @@ use App\Models\Programme;
 use App\Models\User;
 use App\Notifications\AdminNewBooking;
 use App\Notifications\BookingConfirmation;
+use App\Services\AvailabilityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class BookingController extends Controller
 {
-    public function create(Request $request): Response
+    public function create(Request $request, AvailabilityService $availability): Response
     {
+        $date = Carbon::parse($request->query('date') ?: today());
+
         return Inertia::render('Reserver', [
             'programmes' => Programme::published()->orderBy('title')->get(['id', 'title', 'max_participants']),
             'selectedProgrammeId' => Programme::published()->find($request->query('programme'))?->id,
+            'availableSlots' => $availability->slotsForDate($date),
         ]);
     }
 

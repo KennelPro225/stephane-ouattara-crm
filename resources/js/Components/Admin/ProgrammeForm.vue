@@ -26,10 +26,18 @@ const form = useForm({
   duration_label: props.programme?.duration_label ?? '',
   ages_label: props.programme?.ages_label ?? '',
   max_participants: props.programme?.max_participants ?? 20,
+  session_weekday: props.programme?.session_weekday ?? '',
+  session_start_time: props.programme?.session_start_time ?? '',
+  session_duration_minutes: props.programme?.session_duration_minutes ?? '',
   featured: props.programme?.featured ?? false,
   status: props.programme?.status ?? 'draft',
   image: null,
 })
+
+const WEEKDAYS = [
+  { value: 1, label: 'Lundi' }, { value: 2, label: 'Mardi' }, { value: 3, label: 'Mercredi' },
+  { value: 4, label: 'Jeudi' }, { value: 5, label: 'Vendredi' }, { value: 6, label: 'Samedi' }, { value: 0, label: 'Dimanche' },
+]
 
 function onImageChange (event) {
   const file = event.target.files[0]
@@ -152,6 +160,31 @@ function submit () {
         <div class="field">
           <label for="ages_label">Public visé (âges)</label>
           <input id="ages_label" v-model="form.ages_label" class="input" type="text" placeholder="12 – 15 ans">
+        </div>
+      </div>
+
+      <div v-if="form.type === 'group'" style="border:1px solid var(--color-divider);padding:16px">
+        <h6 style="margin:0 0 4px">Séance récurrente</h6>
+        <p class="text-muted" style="margin:0 0 16px;font-size:12px">Bloque automatiquement ce créneau sur la page de réservation, chaque semaine, pour la durée du programme.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+          <div class="field">
+            <label for="session_weekday">Jour de la semaine</label>
+            <select id="session_weekday" v-model="form.session_weekday" class="input">
+              <option value="">Aucun</option>
+              <option v-for="d in WEEKDAYS" :key="d.value" :value="d.value">{{ d.label }}</option>
+            </select>
+            <p v-if="form.errors.session_weekday" class="field-error">{{ form.errors.session_weekday }}</p>
+          </div>
+          <div class="field">
+            <label for="session_start_time">Heure de début</label>
+            <input id="session_start_time" v-model="form.session_start_time" class="input" type="time">
+            <p v-if="form.errors.session_start_time" class="field-error">{{ form.errors.session_start_time }}</p>
+          </div>
+          <div class="field">
+            <label for="session_duration_minutes">Durée (minutes)</label>
+            <input id="session_duration_minutes" v-model="form.session_duration_minutes" class="input" type="number" min="15" step="15">
+            <p v-if="form.errors.session_duration_minutes" class="field-error">{{ form.errors.session_duration_minutes }}</p>
+          </div>
         </div>
       </div>
 

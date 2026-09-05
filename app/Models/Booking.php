@@ -10,8 +10,6 @@ class Booking extends Model
 
     public const SERVICE_TYPES = ['individual', 'club_des_champions', 'group', 'corporate_wellness', 'teambuilding', 'other'];
 
-    public const TIME_SLOTS = ['09:00', '10:30', '14:00', '15:30', '17:00'];
-
     protected $fillable = [
         'customer_id', 'programme_id', 'service_type', 'preferred_date',
         'preferred_time', 'message', 'status', 'confirmed_at',

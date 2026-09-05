@@ -23,6 +23,7 @@ class Programme extends Model
         'title', 'slug', 'audience', 'type', 'level', 'description',
         'price_amount', 'price_label', 'start_date', 'end_date', 'registration_deadline',
         'duration_label', 'ages_label', 'max_participants', 'image_path',
+        'session_weekday', 'session_start_time', 'session_duration_minutes',
         'featured', 'status', 'created_by',
     ];
 
@@ -35,6 +36,7 @@ class Programme extends Model
             'start_date' => 'date:Y-m-d',
             'end_date' => 'date:Y-m-d',
             'registration_deadline' => 'date:Y-m-d',
+            'session_start_time' => 'datetime:H:i',
             'featured' => 'boolean',
         ];
     }
@@ -56,6 +58,16 @@ class Programme extends Model
     public function scopeFeatured(Builder $query): Builder
     {
         return $query->where('featured', true);
+    }
+
+    /** Programmes with a recurring weekly session that meets on the given date. */
+    public function scopeOccurringOn(Builder $query, \Illuminate\Support\Carbon $date): Builder
+    {
+        return $query->whereNotNull('session_weekday')
+            ->whereNotNull('session_start_time')
+            ->where('session_weekday', $date->dayOfWeek)
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date);
     }
 
     public function bookings()

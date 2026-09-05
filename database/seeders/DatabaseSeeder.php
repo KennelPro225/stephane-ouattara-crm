@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\AvailabilityRule;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\GalleryItem;
@@ -12,6 +13,8 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
+    private const DEMO_TIME_SLOTS = ['09:00', '10:30', '14:00', '15:30', '17:00'];
+
     public function run(): void
     {
         $admin = User::updateOrCreate(
@@ -19,12 +22,14 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Stéphane Ouattara', 'password' => bcrypt('Champion2026!'), 'role' => 'admin']
         );
 
+        AvailabilityRule::ensureDefaults();
+
         $programmes = collect([
-            ['title' => 'Club des Champions — Niveau Lion', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Lion', 'price_amount' => 150000, 'price_label' => '150 000 FCFA', 'start_date' => '2026-10-05', 'end_date' => '2026-12-20', 'registration_deadline' => '2026-09-28', 'duration_label' => '12 semaines', 'ages_label' => '12 – 15 ans', 'max_participants' => 24, 'featured' => true, 'description' => "Premier niveau du parcours d'excellence : confiance en soi, prise de parole et discipline personnelle."],
-            ['title' => 'Club des Champions — Niveau Meute', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Meute', 'price_amount' => 180000, 'price_label' => '180 000 FCFA', 'start_date' => '2026-10-12', 'end_date' => '2027-01-31', 'registration_deadline' => '2026-10-03', 'duration_label' => '16 semaines', 'ages_label' => '14 – 17 ans', 'max_participants' => 20, 'featured' => false, 'description' => 'Travail collectif, coopération et leadership partagé au sein du groupe.'],
+            ['title' => 'Club des Champions — Niveau Lion', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Lion', 'price_amount' => 150000, 'price_label' => '150 000 FCFA', 'start_date' => '2026-10-05', 'end_date' => '2026-12-20', 'registration_deadline' => '2026-09-28', 'duration_label' => '12 semaines', 'ages_label' => '12 – 15 ans', 'max_participants' => 24, 'featured' => true, 'session_weekday' => 3, 'session_start_time' => '17:00', 'session_duration_minutes' => 120, 'description' => "Premier niveau du parcours d'excellence : confiance en soi, prise de parole et discipline personnelle."],
+            ['title' => 'Club des Champions — Niveau Meute', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Meute', 'price_amount' => 180000, 'price_label' => '180 000 FCFA', 'start_date' => '2026-10-12', 'end_date' => '2027-01-31', 'registration_deadline' => '2026-10-03', 'duration_label' => '16 semaines', 'ages_label' => '14 – 17 ans', 'max_participants' => 20, 'featured' => false, 'session_weekday' => 4, 'session_start_time' => '17:00', 'session_duration_minutes' => 120, 'description' => 'Travail collectif, coopération et leadership partagé au sein du groupe.'],
             ['title' => 'Club des Champions — Niveau Aigle', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Aigle', 'price_amount' => 210000, 'price_label' => '210 000 FCFA', 'start_date' => '2026-11-09', 'end_date' => '2027-02-28', 'registration_deadline' => '2026-10-31', 'duration_label' => '16 semaines', 'ages_label' => '16 – 19 ans', 'max_participants' => 18, 'featured' => false, 'description' => 'Vision, projet personnel et engagement : le niveau le plus exigeant du Club.'],
             ['title' => 'Compétence 360', 'audience' => 'entreprises', 'type' => 'corporate', 'level' => 'Standard', 'price_amount' => null, 'price_label' => 'Sur devis', 'start_date' => '2026-11-02', 'end_date' => '2026-12-11', 'registration_deadline' => '2026-10-20', 'duration_label' => '6 modules', 'ages_label' => 'Adultes', 'max_participants' => 30, 'featured' => false, 'description' => 'Programme de montée en compétences 360° : posture, communication et performance collective.'],
-            ['title' => 'La Connexion — Parents & Ados', 'audience' => 'adultes', 'type' => 'group', 'level' => 'Standard', 'price_amount' => 95000, 'price_label' => '95 000 FCFA', 'start_date' => '2026-10-18', 'end_date' => '2026-11-22', 'registration_deadline' => '2026-10-10', 'duration_label' => '6 séances', 'ages_label' => 'Parents', 'max_participants' => 25, 'featured' => true, 'description' => 'Rétablir le dialogue entre parents et adolescents avec des outils concrets de communication.'],
+            ['title' => 'La Connexion — Parents & Ados', 'audience' => 'adultes', 'type' => 'group', 'level' => 'Standard', 'price_amount' => 95000, 'price_label' => '95 000 FCFA', 'start_date' => '2026-10-18', 'end_date' => '2026-11-22', 'registration_deadline' => '2026-10-10', 'duration_label' => '6 séances', 'ages_label' => 'Parents', 'max_participants' => 25, 'featured' => true, 'session_weekday' => 6, 'session_start_time' => '10:00', 'session_duration_minutes' => 90, 'description' => 'Rétablir le dialogue entre parents et adolescents avec des outils concrets de communication.'],
             ['title' => 'Coaching Individuel Adolescents', 'audience' => 'adolescents', 'type' => 'individual', 'level' => 'Sur mesure', 'price_amount' => 45000, 'price_label' => '45 000 FCFA / séance', 'start_date' => now()->toDateString(), 'end_date' => now()->addYear()->toDateString(), 'registration_deadline' => null, 'duration_label' => '8 séances type', 'ages_label' => '12 – 19 ans', 'max_participants' => 1, 'featured' => false, 'description' => "Un espace sur mesure pour construire identité, confiance et leadership à l'adolescence."],
             ['title' => 'Coaching Individuel Parents / Adultes', 'audience' => 'adultes', 'type' => 'individual', 'level' => 'Sur mesure', 'price_amount' => 60000, 'price_label' => '60 000 FCFA / séance', 'start_date' => now()->toDateString(), 'end_date' => now()->addYear()->toDateString(), 'registration_deadline' => null, 'duration_label' => '10 séances type', 'ages_label' => 'Adultes', 'max_participants' => 1, 'featured' => false, 'description' => 'Retrouver équilibre, clarté et épanouissement à un tournant personnel ou professionnel.'],
             ['title' => 'Ateliers Jeunes & Théâtre éducatif', 'audience' => 'adolescents', 'type' => 'group', 'level' => 'Standard', 'price_amount' => 35000, 'price_label' => '35 000 FCFA', 'start_date' => '2026-10-26', 'end_date' => '2026-11-30', 'registration_deadline' => '2026-10-18', 'duration_label' => '5 ateliers', 'ages_label' => '10 – 17 ans', 'max_participants' => 28, 'featured' => false, 'description' => 'Exprimer, ressentir, apprendre autrement : des ateliers dynamiques et bienveillants.'],
@@ -88,7 +93,7 @@ class DatabaseSeeder extends Seeder
                 'programme_id' => $programme?->id,
                 'service_type' => $type,
                 'preferred_date' => $date->toDateString(),
-                'preferred_time' => Booking::TIME_SLOTS[array_rand(Booking::TIME_SLOTS)],
+                'preferred_time' => self::DEMO_TIME_SLOTS[array_rand(self::DEMO_TIME_SLOTS)],
                 'status' => $status,
                 'confirmed_at' => in_array($status, ['confirmed', 'completed']) ? now() : null,
             ]);

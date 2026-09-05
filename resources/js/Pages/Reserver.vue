@@ -1,30 +1,49 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { Head, usePage, useForm } from '@inertiajs/vue3'
+import { computed, ref, watch } from 'vue'
+import { Head, router, usePage, useForm } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
 
 const props = defineProps({
   programmes: Array,
   selectedProgrammeId: { type: [Number, String], default: null },
+  availableSlots: { type: Array, default: () => [] },
 })
 
 const page = usePage()
 const content = computed(() => page.props.content)
 
 const serviceOpts = ['Coaching individuel', 'Club des Champions', 'Coaching de groupe', 'Bien-être entreprise', 'Teambuilding', 'Autres']
-const timeSlots = ['09:00', '10:30', '14:00', '15:30', '17:00']
 
 const sent = ref(false)
+const loadingSlots = ref(false)
 
 const form = useForm({
   service: '',
   prenom: '', nom: '', email: '', tel: '', societe: '', poste: '',
   programme_id: props.selectedProgrammeId ?? '',
-  date: '', heure: '09:00', message: '',
+  date: '', heure: '', message: '',
 })
 
 const selectedProgramme = computed(() => props.programmes.find((p) => p.id == form.programme_id))
 const selectedProgrammeSeats = computed(() => selectedProgramme.value?.available_seats ?? null)
+
+watch(() => form.date, (date) => {
+  if (! date) return
+  loadingSlots.value = true
+  router.reload({
+    only: ['availableSlots'],
+    data: { date },
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => { loadingSlots.value = false },
+  })
+})
+
+watch(() => props.availableSlots, (slots) => {
+  if (! slots.includes(form.heure)) {
+    form.heure = slots[0] ?? ''
+  }
+}, { immediate: true })
 
 function submit () {
   form.post(route('bookings.store'), {
@@ -111,9 +130,13 @@ function resetForm () {
             </div>
             <div class="field">
               <label for="heure">Heure souhaitée</label>
-              <select id="heure" v-model="form.heure" class="input">
-                <option v-for="s in timeSlots" :key="s" :value="s">{{ s }}</option>
+              <select id="heure" v-model="form.heure" class="input" :disabled="loadingSlots || availableSlots.length === 0">
+                <option v-if="loadingSlots" value="">Chargement…</option>
+                <option v-else-if="availableSlots.length === 0" value="">Aucun créneau disponible ce jour-là</option>
+                <option v-for="s in availableSlots" :key="s" :value="s">{{ s }}</option>
               </select>
+              <p v-if="form.errors.heure" class="field-error">{{ form.errors.heure }}</p>
+              <p v-if="!loadingSlots && form.date && availableSlots.length === 0" class="text-muted" style="margin:6px 0 0;font-size:12px">Aucun créneau disponible ce jour-là — merci de choisir une autre date.</p>
             </div>
           </div>
 
@@ -135,7 +158,7 @@ function resetForm () {
               <span class="text-muted">Service</span><span>{{ form.service || '—' }}</span>
               <span class="text-muted">Programme</span><span>{{ selectedProgramme?.title || 'Aucun' }}</span>
               <span class="text-muted">Date</span><span>{{ form.date || '—' }}</span>
-              <span class="text-muted">Heure</span><span>{{ form.heure }}</span>
+              <span class="text-muted">Heure</span><span>{{ form.heure || '—' }}</span>
             </div>
           </div>
           <div>

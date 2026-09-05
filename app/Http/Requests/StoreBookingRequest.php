@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Booking;
 use App\Models\Programme;
+use App\Services\AvailabilityService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -27,7 +28,7 @@ class StoreBookingRequest extends FormRequest
             'poste' => ['nullable', 'string', 'max:255'],
             'programme_id' => ['nullable', 'exists:programmes,id,status,published'],
             'date' => ['required', 'date', 'after_or_equal:today'],
-            'heure' => ['nullable', Rule::in(Booking::TIME_SLOTS)],
+            'heure' => ['nullable', 'date_format:H:i'],
             'message' => ['nullable', 'string', 'max:2000'],
         ];
     }
@@ -54,6 +55,17 @@ class StoreBookingRequest extends FormRequest
             $programme = Programme::find($programmeId);
             if ($programme && $programme->available_seats <= 0) {
                 $validator->errors()->add('programme_id', 'Ce programme est complet, merci de choisir une autre session.');
+            }
+        });
+
+        $validator->after(function (Validator $validator) {
+            $heure = $this->input('heure');
+            $date = $this->input('date');
+            if (! $heure || ! $date) {
+                return;
+            }
+            if (! app(AvailabilityService::class)->isAvailable(Carbon::parse($date), $heure)) {
+                $validator->errors()->add('heure', 'Ce créneau n’est plus disponible, merci d’en choisir un autre.');
             }
         });
     }

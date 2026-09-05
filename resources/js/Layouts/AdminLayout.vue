@@ -10,6 +10,7 @@ const tabs = [
   { label: 'Programmes', href: () => route('admin.programmes.index') },
   { label: 'Clients', href: () => route('admin.customers.index') },
   { label: 'Réservations', href: () => route('admin.bookings.index') },
+  { label: 'Disponibilités', href: () => route('admin.availability.index') },
   { label: 'Contenus', href: () => route('admin.content.index') },
 ]
 

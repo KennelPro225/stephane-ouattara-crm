@@ -43,6 +43,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::patch('/clients/{customer}', [Admin\CustomerController::class, 'update'])->name('customers.update');
     Route::post('/clients/{customer}/notes', [Admin\CustomerController::class, 'addNote'])->name('customers.notes.store');
 
+    Route::get('/disponibilites', [Admin\AvailabilityController::class, 'index'])->name('availability.index');
+    Route::put('/disponibilites', [Admin\AvailabilityController::class, 'update'])->name('availability.update');
+
     Route::get('/contenus', [Admin\ContentController::class, 'index'])->name('content.index');
     Route::put('/contenus', [Admin\ContentController::class, 'updateSettings'])->name('content.update');
     Route::post('/contenus/images', [Admin\ContentController::class, 'updateImages'])->name('content.images');

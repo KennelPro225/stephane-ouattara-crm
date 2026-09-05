@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Programme;
 use App\Models\User;
+use App\Services\AvailabilityService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class CrmSmokeTest extends TestCase
@@ -27,14 +29,21 @@ class CrmSmokeTest extends TestCase
 
         $this->get("/reserver-une-session?programme={$programme->id}")->assertOk();
 
+        $date = Carbon::parse(now()->addDays(10));
+        $slots = app(AvailabilityService::class)->slotsForDate($date);
+        while (empty($slots)) {
+            $date->addDay();
+            $slots = app(AvailabilityService::class)->slotsForDate($date);
+        }
+
         $response = $this->post('/reserver-une-session', [
             'service' => 'Coaching individuel',
             'prenom' => 'Test',
             'nom' => 'Client',
             'email' => 'test.client@example.ci',
             'programme_id' => $programme->id,
-            'date' => now()->addDays(10)->toDateString(),
-            'heure' => '09:00',
+            'date' => $date->toDateString(),
+            'heure' => $slots[0],
         ]);
 
         $response->assertSessionHasNoErrors();
