@@ -59,12 +59,22 @@ class StoreBookingRequest extends FormRequest
         });
 
         $validator->after(function (Validator $validator) {
-            $heure = $this->input('heure');
             $date = $this->input('date');
-            if (! $heure || ! $date) {
+            if (! $date || $validator->errors()->has('date')) {
                 return;
             }
-            if (! app(AvailabilityService::class)->isAvailable(Carbon::parse($date), $heure)) {
+
+            $slots = app(AvailabilityService::class)->slotsForDate(Carbon::parse($date));
+
+            // Closed day, or a day entirely taken by a full-day programme.
+            if ($slots === []) {
+                $validator->errors()->add('date', 'Le coach n’est pas disponible ce jour-là, merci de choisir une autre date.');
+
+                return;
+            }
+
+            $heure = $this->input('heure');
+            if ($heure && ! in_array($heure, $slots, true)) {
                 $validator->errors()->add('heure', 'Ce créneau n’est plus disponible, merci d’en choisir un autre.');
             }
         });

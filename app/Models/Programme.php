@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -19,11 +20,20 @@ class Programme extends Model
 
     public const STATUSES = ['draft', 'published'];
 
+    /** How a programme occupies the coach's agenda. */
+    public const SCHEDULE_MODES = ['none', 'weekly', 'weekly_full_day', 'full_period'];
+
+    /** Modes that repeat on one weekday between start_date and end_date. */
+    public const WEEKLY_MODES = ['weekly', 'weekly_full_day'];
+
+    /** Modes that swallow a whole service day rather than a timed interval. */
+    public const FULL_DAY_MODES = ['weekly_full_day', 'full_period'];
+
     protected $fillable = [
         'title', 'slug', 'audience', 'type', 'level', 'description',
         'price_amount', 'price_label', 'start_date', 'end_date', 'registration_deadline',
         'duration_label', 'ages_label', 'max_participants', 'image_path',
-        'session_weekday', 'session_start_time', 'session_duration_minutes',
+        'schedule_mode', 'session_weekday', 'session_start_time', 'session_duration_minutes',
         'featured', 'status', 'created_by',
     ];
 
@@ -37,6 +47,9 @@ class Programme extends Model
             'end_date' => 'date:Y-m-d',
             'registration_deadline' => 'date:Y-m-d',
             'session_start_time' => 'datetime:H:i',
+            // Form input arrives as strings; keep the scheduling maths numeric.
+            'session_weekday' => 'integer',
+            'session_duration_minutes' => 'integer',
             'featured' => 'boolean',
         ];
     }
@@ -60,14 +73,37 @@ class Programme extends Model
         return $query->where('featured', true);
     }
 
-    /** Programmes with a recurring weekly session that meets on the given date. */
-    public function scopeOccurringOn(Builder $query, \Illuminate\Support\Carbon $date): Builder
+    /**
+     * Programmes that occupy the agenda at some point within the given range.
+     * Whether a programme actually applies to a specific date (weekday match for
+     * the weekly modes, always for full_period) is decided by AvailabilityService.
+     */
+    public function scopeAffectingRange(Builder $query, Carbon $from, Carbon $to): Builder
     {
-        return $query->whereNotNull('session_weekday')
-            ->whereNotNull('session_start_time')
-            ->where('session_weekday', $date->dayOfWeek)
-            ->whereDate('start_date', '<=', $date)
-            ->whereDate('end_date', '>=', $date);
+        return $query->where('schedule_mode', '!=', 'none')
+            ->whereDate('start_date', '<=', $to)
+            ->whereDate('end_date', '>=', $from);
+    }
+
+    /** Does this programme occupy the agenda on the given date? */
+    public function occursOn(Carbon $date): bool
+    {
+        if ($this->schedule_mode === 'none') {
+            return false;
+        }
+
+        if ($date->lt($this->start_date) || $date->gt($this->end_date)) {
+            return false;
+        }
+
+        return $this->schedule_mode === 'full_period'
+            || (int) $this->session_weekday === $date->dayOfWeek;
+    }
+
+    /** Does this programme swallow the whole service day when it occurs? */
+    public function blocksFullDay(): bool
+    {
+        return in_array($this->schedule_mode, self::FULL_DAY_MODES, true);
     }
 
     public function bookings()

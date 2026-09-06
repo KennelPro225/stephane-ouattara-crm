@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AvailabilityRule;
 use App\Models\Booking;
+use App\Models\Programme;
 use App\Services\AvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -51,6 +52,28 @@ class BookingAvailabilityTest extends TestCase
 
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('bookings', ['preferred_time' => '09:00']);
+    }
+
+    public function test_booking_on_a_full_day_blocked_date_is_rejected(): void
+    {
+        $monday = Carbon::parse('next monday');
+
+        Programme::create([
+            'title' => 'Séminaire immersif', 'audience' => 'entreprises', 'type' => 'corporate',
+            'description' => 'x', 'price_label' => 'x', 'duration_label' => 'x', 'ages_label' => 'x',
+            'max_participants' => 30, 'status' => 'published',
+            'start_date' => $monday, 'end_date' => $monday,
+            'schedule_mode' => 'full_period',
+        ]);
+
+        $this->assertSame([], app(AvailabilityService::class)->slotsForDate($monday));
+
+        // Rejected even without a time: the whole date is unavailable.
+        $payload = $this->payload($monday, '09:00');
+        unset($payload['heure']);
+
+        $this->post('/reserver-une-session', $payload)->assertSessionHasErrors('date');
+        $this->assertDatabaseCount('bookings', 0);
     }
 
     public function test_slot_disappears_after_being_booked(): void

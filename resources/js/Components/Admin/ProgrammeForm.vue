@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 
 const props = defineProps({
   programme: { type: Object, default: null },
+  availabilityRules: { type: Array, default: () => [] },
   submitRoute: { type: String, required: true },
   method: { type: String, default: 'post' },
   title: { type: String, required: true },
@@ -26,6 +27,7 @@ const form = useForm({
   duration_label: props.programme?.duration_label ?? '',
   ages_label: props.programme?.ages_label ?? '',
   max_participants: props.programme?.max_participants ?? 20,
+  schedule_mode: props.programme?.schedule_mode ?? 'none',
   session_weekday: props.programme?.session_weekday ?? '',
   session_start_time: props.programme?.session_start_time ?? '',
   session_duration_minutes: props.programme?.session_duration_minutes ?? '',
@@ -38,6 +40,24 @@ const WEEKDAYS = [
   { value: 1, label: 'Lundi' }, { value: 2, label: 'Mardi' }, { value: 3, label: 'Mercredi' },
   { value: 4, label: 'Jeudi' }, { value: 5, label: 'Vendredi' }, { value: 6, label: 'Samedi' }, { value: 0, label: 'Dimanche' },
 ]
+
+const SCHEDULE_MODES = [
+  { value: 'none', label: 'Aucun — n’occupe pas l’agenda' },
+  { value: 'weekly', label: 'Séance hebdomadaire (créneau horaire)' },
+  { value: 'weekly_full_day', label: 'Séance hebdomadaire (journée entière)' },
+  { value: 'full_period', label: 'Événement continu (toute la période, journée entière)' },
+]
+
+const needsWeekday = computed(() => ['weekly', 'weekly_full_day'].includes(form.schedule_mode))
+
+/** Service hours of the selected weekday, so the admin sees the valid window. */
+const selectedDayHours = computed(() => {
+  if (form.session_weekday === '' || form.session_weekday === null) return null
+  const rule = props.availabilityRules.find((r) => r.weekday === Number(form.session_weekday))
+  if (!rule) return null
+  if (!rule.is_open || !rule.start_time || !rule.end_time) return 'Fermé — ouvrez ce jour dans Disponibilités.'
+  return `Heures de prestation : ${rule.start_time.slice(0, 5)} – ${rule.end_time.slice(0, 5)}`
+})
 
 function onImageChange (event) {
   const file = event.target.files[0]
@@ -163,29 +183,43 @@ function submit () {
         </div>
       </div>
 
-      <div v-if="form.type === 'group'" style="border:1px solid var(--color-divider);padding:16px">
-        <h6 style="margin:0 0 4px">Séance récurrente</h6>
-        <p class="text-muted" style="margin:0 0 16px;font-size:12px">Bloque automatiquement ce créneau sur la page de réservation, chaque semaine, pour la durée du programme.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">
+      <div style="border:1px solid var(--color-divider);padding:16px">
+        <h6 style="margin:0 0 4px">Planification</h6>
+        <p class="text-muted" style="margin:0 0 16px;font-size:12px">Détermine ce que ce programme occupe dans l'agenda du coach. Les créneaux occupés disparaissent automatiquement du calendrier de réservation.</p>
+
+        <div class="field" style="max-width:420px">
+          <label for="schedule_mode">Impact sur l'agenda</label>
+          <select id="schedule_mode" v-model="form.schedule_mode" class="input">
+            <option v-for="m in SCHEDULE_MODES" :key="m.value" :value="m.value">{{ m.label }}</option>
+          </select>
+          <p v-if="form.errors.schedule_mode" class="field-error">{{ form.errors.schedule_mode }}</p>
+        </div>
+
+        <div v-if="needsWeekday" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px">
           <div class="field">
             <label for="session_weekday">Jour de la semaine</label>
             <select id="session_weekday" v-model="form.session_weekday" class="input">
-              <option value="">Aucun</option>
+              <option value="">Choisir…</option>
               <option v-for="d in WEEKDAYS" :key="d.value" :value="d.value">{{ d.label }}</option>
             </select>
+            <p v-if="selectedDayHours" class="text-muted" style="margin:6px 0 0;font-size:11px">{{ selectedDayHours }}</p>
             <p v-if="form.errors.session_weekday" class="field-error">{{ form.errors.session_weekday }}</p>
           </div>
-          <div class="field">
+          <div v-if="form.schedule_mode === 'weekly'" class="field">
             <label for="session_start_time">Heure de début</label>
             <input id="session_start_time" v-model="form.session_start_time" class="input" type="time">
             <p v-if="form.errors.session_start_time" class="field-error">{{ form.errors.session_start_time }}</p>
           </div>
-          <div class="field">
+          <div v-if="form.schedule_mode === 'weekly'" class="field">
             <label for="session_duration_minutes">Durée (minutes)</label>
             <input id="session_duration_minutes" v-model="form.session_duration_minutes" class="input" type="number" min="15" step="15">
             <p v-if="form.errors.session_duration_minutes" class="field-error">{{ form.errors.session_duration_minutes }}</p>
           </div>
         </div>
+
+        <p v-if="form.schedule_mode === 'full_period'" class="text-muted" style="margin:16px 0 0;font-size:12px">
+          Toutes les dates entre <strong>Début</strong> et <strong>Fin</strong> seront entièrement bloquées : aucune session ne pourra être réservée ces jours-là.
+        </p>
       </div>
 
       <label class="radio">

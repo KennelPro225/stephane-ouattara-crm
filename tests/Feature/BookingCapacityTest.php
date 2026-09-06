@@ -5,12 +5,27 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Programme;
+use App\Services\AvailabilityService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class BookingCapacityTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** Keeps these capacity tests independent of which weekday the suite runs on. */
+    private function nextBookableDate(): Carbon
+    {
+        $availability = app(AvailabilityService::class);
+        $date = Carbon::today()->addDays(10);
+
+        while ($availability->slotsForDate($date) === []) {
+            $date->addDay();
+        }
+
+        return $date;
+    }
 
     private function fullProgramme(): Programme
     {
@@ -61,7 +76,7 @@ class BookingCapacityTest extends TestCase
             'service' => 'Coaching de groupe',
             'prenom' => 'Nouveau', 'nom' => 'Client', 'email' => 'nouveau.client@example.ci',
             'programme_id' => $programme->id,
-            'date' => now()->addDays(10)->toDateString(),
+            'date' => $this->nextBookableDate()->toDateString(),
         ]);
 
         $response->assertSessionHasErrors('programme_id');
@@ -73,7 +88,7 @@ class BookingCapacityTest extends TestCase
         $response = $this->post('/reserver-une-session', [
             'service' => 'Autres',
             'prenom' => 'Session', 'nom' => 'Perso', 'email' => 'session.perso@example.ci',
-            'date' => now()->addDays(10)->toDateString(),
+            'date' => $this->nextBookableDate()->toDateString(),
         ]);
 
         $response->assertSessionDoesntHaveErrors();

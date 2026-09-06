@@ -2,10 +2,13 @@
 import { computed, ref, watch } from 'vue'
 import { Head, router, usePage, useForm } from '@inertiajs/vue3'
 import PublicLayout from '@/Layouts/PublicLayout.vue'
+import AvailabilityCalendar from '@/Components/AvailabilityCalendar.vue'
 
 const props = defineProps({
   programmes: Array,
   selectedProgrammeId: { type: [Number, String], default: null },
+  month: { type: String, required: true },
+  availableDates: { type: Array, default: () => [] },
   availableSlots: { type: Array, default: () => [] },
 })
 
@@ -16,6 +19,8 @@ const serviceOpts = ['Coaching individuel', 'Club des Champions', 'Coaching de g
 
 const sent = ref(false)
 const loadingSlots = ref(false)
+const loadingDates = ref(false)
+const visibleMonth = ref(props.month)
 
 const form = useForm({
   service: '',
@@ -32,10 +37,21 @@ watch(() => form.date, (date) => {
   loadingSlots.value = true
   router.reload({
     only: ['availableSlots'],
-    data: { date },
+    data: { date, month: visibleMonth.value },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => { loadingSlots.value = false },
+  })
+})
+
+watch(visibleMonth, (month) => {
+  loadingDates.value = true
+  router.reload({
+    only: ['availableDates'],
+    data: { month, date: form.date },
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => { loadingDates.value = false },
   })
 })
 
@@ -123,15 +139,24 @@ function resetForm () {
               </p>
               <p v-if="form.errors.programme_id" class="field-error">{{ form.errors.programme_id }}</p>
             </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;align-items:start">
             <div class="field">
-              <label for="date">Date souhaitée *</label>
-              <input id="date" v-model="form.date" class="input" type="date" :min="new Date().toISOString().slice(0, 10)">
+              <label>Date souhaitée *</label>
+              <AvailabilityCalendar
+                v-model="form.date"
+                v-model:month="visibleMonth"
+                :available-dates="availableDates"
+                :loading="loadingDates"
+              />
               <p v-if="form.errors.date" class="field-error">{{ form.errors.date }}</p>
             </div>
             <div class="field">
               <label for="heure">Heure souhaitée</label>
-              <select id="heure" v-model="form.heure" class="input" :disabled="loadingSlots || availableSlots.length === 0">
-                <option v-if="loadingSlots" value="">Chargement…</option>
+              <select id="heure" v-model="form.heure" class="input" :disabled="!form.date || loadingSlots || availableSlots.length === 0">
+                <option v-if="!form.date" value="">Choisissez d'abord une date</option>
+                <option v-else-if="loadingSlots" value="">Chargement…</option>
                 <option v-else-if="availableSlots.length === 0" value="">Aucun créneau disponible ce jour-là</option>
                 <option v-for="s in availableSlots" :key="s" :value="s">{{ s }}</option>
               </select>

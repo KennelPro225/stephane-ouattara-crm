@@ -20,13 +20,42 @@ class BookingController extends Controller
 {
     public function create(Request $request, AvailabilityService $availability): Response
     {
-        $date = Carbon::parse($request->query('date') ?: today());
+        $month = $this->resolveMonth($request->query('month'));
+        $date = $this->resolveDate($request->query('date'));
 
         return Inertia::render('Reserver', [
             'programmes' => Programme::published()->orderBy('title')->get(['id', 'title', 'max_participants']),
             'selectedProgrammeId' => Programme::published()->find($request->query('programme'))?->id,
-            'availableSlots' => $availability->slotsForDate($date),
+            'month' => $month,
+            'availableDates' => $availability->availableDatesInMonth($month),
+            'availableSlots' => $date ? $availability->slotsForDate($date) : [],
         ]);
+    }
+
+    private function resolveMonth(?string $month): string
+    {
+        if ($month && preg_match('/^\d{4}-\d{2}$/', $month)) {
+            try {
+                return Carbon::createFromFormat('Y-m-d', $month.'-01')->format('Y-m');
+            } catch (\Exception) {
+                // fall through to the current month
+            }
+        }
+
+        return today()->format('Y-m');
+    }
+
+    private function resolveDate(?string $date): ?Carbon
+    {
+        if (! $date) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $date)->startOfDay();
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public function store(StoreBookingRequest $request): RedirectResponse

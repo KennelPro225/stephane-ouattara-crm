@@ -25,6 +25,17 @@ class AvailabilityServiceTest extends TestCase
         AvailabilityRule::ensureDefaults();
     }
 
+    private function programme(array $attributes): Programme
+    {
+        return Programme::create($attributes + [
+            'title' => 'Programme test '.uniqid(),
+            'audience' => 'adultes', 'type' => 'group',
+            'description' => 'x', 'price_label' => 'x', 'duration_label' => 'x', 'ages_label' => 'x',
+            'max_participants' => 10, 'status' => 'published',
+            'created_by' => User::factory()->create(['role' => 'admin'])->id,
+        ]);
+    }
+
     public function test_closed_day_has_no_slots(): void
     {
         AvailabilityRule::where('weekday', 0)->update(['is_open' => false]);
@@ -73,10 +84,63 @@ class AvailabilityServiceTest extends TestCase
             'description' => 'x', 'price_label' => 'x', 'duration_label' => 'x', 'ages_label' => 'x',
             'max_participants' => 10, 'status' => 'published', 'created_by' => $admin->id,
             'start_date' => $wednesday->copy()->subWeek(), 'end_date' => $wednesday->copy()->addWeek(),
-            'session_weekday' => 3, 'session_start_time' => '10:00', 'session_duration_minutes' => 120,
+            'schedule_mode' => 'weekly', 'session_weekday' => 3, 'session_start_time' => '10:00', 'session_duration_minutes' => 120,
         ]);
 
         $this->assertSame(['09:00', '12:00'], $this->service->slotsForDate($wednesday));
+    }
+
+    public function test_full_day_weekly_programme_blocks_the_whole_day(): void
+    {
+        set_setting('booking_slot_minutes', 60);
+        $wednesday = Carbon::parse('next wednesday');
+        AvailabilityRule::where('weekday', 3)->update(['is_open' => true, 'start_time' => '09:00', 'end_time' => '18:00']);
+
+        $this->programme([
+            'start_date' => $wednesday->copy()->subWeek(), 'end_date' => $wednesday->copy()->addWeek(),
+            'schedule_mode' => 'weekly_full_day', 'session_weekday' => 3,
+        ]);
+
+        $this->assertSame([], $this->service->slotsForDate($wednesday));
+        // The neighbouring days are untouched.
+        $this->assertNotEmpty($this->service->slotsForDate($wednesday->copy()->addDay()));
+    }
+
+    public function test_full_period_programme_blocks_every_date_of_its_range(): void
+    {
+        set_setting('booking_slot_minutes', 60);
+        $start = Carbon::parse('next monday');
+        $end = $start->copy()->addDays(2);
+
+        $this->programme([
+            'start_date' => $start, 'end_date' => $end, 'schedule_mode' => 'full_period',
+        ]);
+
+        foreach ([$start, $start->copy()->addDay(), $end] as $blocked) {
+            $this->assertSame([], $this->service->slotsForDate($blocked), $blocked->toDateString().' devrait être bloqué');
+        }
+
+        $this->assertNotEmpty($this->service->slotsForDate($end->copy()->addDay()));
+    }
+
+    public function test_available_dates_in_month_skips_blocked_closed_and_past_dates(): void
+    {
+        set_setting('booking_slot_minutes', 60);
+        $blocked = Carbon::today()->addMonth()->startOfMonth()->next(Carbon::TUESDAY);
+
+        $this->programme([
+            'start_date' => $blocked, 'end_date' => $blocked, 'schedule_mode' => 'full_period',
+        ]);
+
+        $dates = $this->service->availableDatesInMonth($blocked->format('Y-m'));
+
+        $this->assertNotContains($blocked->toDateString(), $dates);
+        // Sunday is closed by default, and nothing before today is ever offered.
+        foreach ($dates as $date) {
+            $parsed = Carbon::parse($date);
+            $this->assertNotSame(Carbon::SUNDAY, $parsed->dayOfWeek);
+            $this->assertTrue($parsed->gte(Carbon::today()));
+        }
     }
 
     public function test_adjacent_non_overlapping_slot_stays_available(): void
