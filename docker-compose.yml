@@ -11,22 +11,50 @@ services:
       - path: .env.docker
         required: false
     ports:
-      # Bind a reverse proxy (Caddy, Traefik, nginx…) in front of this for TLS.
-      # 8080 and 8000 are the ports other local projects grab first, so the
-      # default sits out of their way. Override with APP_PORT when needed.
-      - "${APP_PORT:-8090}:80"
+      # Bound to the loopback by default: in production Caddy reaches the app
+      # over the compose network, so publishing this publicly would expose a
+      # plaintext path around TLS. Keep it for local access and debugging.
+      # 8080/8000 are what other local projects grab first, hence 8090.
+      # Set APP_BIND=0.0.0.0 to reach it from the LAN.
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:-8090}:80"
     volumes:
-      # The SQLite database — the whole CRM lives here, back this up.
-      - crm-database:/data
-      # Uploaded programme/gallery/site images.
-      - crm-uploads:/var/www/html/storage/app/public
+      # Every piece of persistent state: SQLite database, app key and uploaded
+      # images. One mount, one thing to back up — and it mirrors Railway, which
+      # allows a single volume per service.
+      - crm-data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/up >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:${PORT:-80}/up >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 5s
       start_period: 30s
       retries: 3
 
+  # Public entry point, started only with `--profile prod`. Terminates TLS and
+  # proxies to the app container over the internal network.
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["prod"]
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    env_file:
+      # APP_DOMAIN and ACME_EMAIL are read straight from the file by Caddy.
+      # (Compose only interpolates its own ${...} from the shell or ./.env, not
+      # from env_file, so passing them through the container is what works.)
+      - path: .env.docker
+        required: false
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Issued certificates — persist them or you will hit Let's Encrypt's
+      # rate limits after a few redeploys.
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
 volumes:
-  crm-database:
-  crm-uploads:
+  crm-data:
+  caddy-data:
+  caddy-config:

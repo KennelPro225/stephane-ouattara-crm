@@ -22,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias(['admin' => AdminMiddleware::class]);
 
+        // In production the app only ever answers through the Caddy container,
+        // which is the sole publicly bound service; the app's own port stays on
+        // the loopback. Without this, Laravel would read the proxy's address
+        // instead of the visitor's, build http:// URLs behind HTTPS and drop
+        // secure session cookies.
+        $middleware->trustProxies(at: '*');
+
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })

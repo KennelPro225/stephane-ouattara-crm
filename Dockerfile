@@ -63,7 +63,7 @@ RUN set -eux; \
     rm -rf /var/cache/apk/*
 
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-production.ini
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint
 RUN chmod +x /usr/local/bin/entrypoint
@@ -78,22 +78,26 @@ WORKDIR /var/www/html
 COPY --from=vendor  --chown=www-data:www-data /app        /var/www/html
 COPY --from=assets  --chown=www-data:www-data /app/public /var/www/html/public
 
-# /data holds the SQLite database; mount a volume here to make it persistent.
-RUN mkdir -p /data storage/framework/cache/data storage/framework/sessions \
-        storage/framework/views storage/logs storage/app/public bootstrap/cache \
+# /data carries every piece of persistent state — SQLite database, app key and
+# uploaded images — so a single volume mounted here is all a deployment needs.
+# Railway in particular allows only one volume per service.
+RUN mkdir -p /data/uploads storage/framework/cache/data storage/framework/sessions \
+        storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data /data storage bootstrap/cache
 
 ENV APP_ENV=production \
     APP_DEBUG=false \
     DB_CONNECTION=sqlite \
     DB_DATABASE=/data/database.sqlite \
-    LOG_CHANNEL=stderr
+    LOG_CHANNEL=stderr \
+    PORT=80
 
 EXPOSE 80
 
-# /up is the health route registered in bootstrap/app.php.
+# /up is the health route registered in bootstrap/app.php. Shell form so $PORT
+# is resolved at runtime — the platform may hand us a different one.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD wget -qO- http://127.0.0.1/up >/dev/null 2>&1 || exit 1
+    CMD wget -qO- "http://127.0.0.1:${PORT:-80}/up" >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["entrypoint"]
 CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

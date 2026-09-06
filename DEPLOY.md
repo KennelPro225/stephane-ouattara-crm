@@ -1,8 +1,98 @@
-# Déploiement en production (Docker)
+# Déploiement en production
 
 Image unique et autonome : **nginx + php-fpm + worker de file d'attente** pilotés par
 supervisord. Le CRM tourne sur SQLite, donc un seul conteneur — il n'y a rien à
 répartir sur plusieurs instances.
+
+La cible de production est **Railway** (section ci-dessous). Le `docker-compose.yml`
+sert au test local et à un auto-hébergement éventuel.
+
+---
+
+# Railway (production)
+
+Railway construit l'image depuis le `Dockerfile`, termine le TLS et fournit le
+domaine public : il n'y a ni reverse proxy ni certificat à gérer.
+
+## 1. Créer le service
+
+Connecte le dépôt à un projet Railway. `railway.json` fixe déjà le builder
+Dockerfile, le health check sur `/up` et **`numReplicas: 1`** — ne l'augmente
+pas : SQLite ne supporte pas plusieurs instances écrivant en parallèle.
+
+## 2. Attacher le volume — indispensable
+
+Railway n'autorise **qu'un seul volume par service**, monté sur **`/data`**.
+Tout l'état persistant y vit :
+
+| Chemin | Contenu |
+|---|---|
+| `/data/database.sqlite` | Base : clients, réservations, programmes, réglages |
+| `/data/uploads` | Images des programmes, galerie, site (`storage/app/public` y pointe) |
+| `/data/app_key` | Clé applicative générée au premier démarrage |
+
+Sans ce volume, **tout est perdu à chaque redéploiement** : le conteneur
+démarrerait quand même, avec une base vide et une nouvelle clé.
+
+## 3. Variables d'environnement
+
+À définir dans l'onglet Variables du service :
+
+```
+APP_NAME=Stéphane Ouattara
+APP_LOCALE=fr
+APP_FALLBACK_LOCALE=fr
+LOG_LEVEL=warning
+SESSION_SECURE_COOKIE=true
+
+MAIL_MAILER=smtp
+MAIL_HOST=…
+MAIL_PORT=587
+MAIL_USERNAME=…
+MAIL_PASSWORD=…
+MAIL_FROM_ADDRESS=contact@stephane-ouattara.com
+```
+
+Ce qu'il ne faut **pas** définir, c'est déjà géré :
+
+- `PORT` — injecté par Railway ; nginx est configuré dessus au démarrage.
+- `APP_URL` — déduit de `RAILWAY_PUBLIC_DOMAIN`. Sur un domaine personnalisé,
+  définis-le explicitement (`https://stephane-ouattara.com`).
+- `APP_KEY` — générée et conservée dans `/data/app_key`.
+- `DB_CONNECTION` / `DB_DATABASE`, `APP_ENV`, `APP_DEBUG` — valeurs par défaut
+  de l'image.
+
+## 4. Déployer
+
+Au démarrage, les logs affichent l'adresse publique retenue :
+
+```
+[entrypoint] env=production debug=false db=sqlite mailer=smtp port=8080
+[entrypoint] public address: https://<ton-service>.up.railway.app
+```
+
+Les migrations sont jouées à chaque démarrage : un simple `git push` suffit
+pour livrer une mise à jour.
+
+## 5. Compte administrateur
+
+⚠️ Le site est public : **le compte de démonstration
+`admin@stephane-ouattara.com` / `Champion2026!` figure en clair dans le seeder
+du dépôt**. Tant qu'il est en place, n'importe qui peut accéder à
+l'administration. Pour changer le mot de passe :
+
+```sh
+railway run php artisan tinker --execute="
+App\Models\User::where('email','admin@stephane-ouattara.com')
+    ->update(['password' => bcrypt('UN_MOT_DE_PASSE_SOLIDE')]);"
+```
+
+Charger les données de démonstration (12 programmes, témoignages, galerie) :
+`railway run php artisan db:seed --force`.
+
+---
+
+# Auto-hébergement (Docker Compose)
 
 ## Démarrage
 
@@ -58,8 +148,7 @@ pas au build : ils dépendent des variables d'environnement du conteneur.
 
 | Volume | Chemin | Contenu |
 |---|---|---|
-| `crm-database` | `/data` | La base SQLite (clients, réservations, programmes, réglages) **et** `app_key` |
-| `crm-uploads` | `/var/www/html/storage/app/public` | Photos des programmes, galerie, images du site |
+| `crm-data` | `/data` | Tout l'état persistant : `database.sqlite`, `uploads/` et `app_key` |
 
 Sauvegarde de la base :
 
@@ -73,24 +162,27 @@ docker compose exec app sqlite3 /data/database.sqlite ".backup '/data/backup.sql
 > `sqlite` à la liste `apk add` du Dockerfile ; sinon copie simplement le
 > fichier conteneur arrêté : `docker compose cp app:/data/database.sqlite .`.
 
-## Derrière un reverse proxy HTTPS
+## Exposition publique avec HTTPS (auto-hébergement)
 
-C'est le déploiement attendu (Caddy, Traefik, nginx…), avec la terminaison TLS
-en amont. Deux points à ne pas oublier :
+Le profil `prod` ajoute **Caddy** en frontal : il occupe les ports 80/443 et
+obtient un certificat Let's Encrypt automatiquement.
 
-1. `APP_URL` doit être l'URL publique **en https** — les URLs des images
-   téléversées en dérivent (`config/filesystems.php`).
-2. Laravel ne fait confiance à aucun proxy par défaut dans ce projet. Sans ça,
-   il génère des liens en `http://` et `SESSION_SECURE_COOKIE=true` casse la
-   connexion. Ajoute dans `bootstrap/app.php`, dans le callback
-   `withMiddleware` :
+```sh
+# .env.docker : APP_DOMAIN, ACME_EMAIL, et APP_URL=https://<domaine>
+docker compose --profile prod up -d
+```
 
-   ```php
-   $middleware->trustProxies(at: '*');
-   ```
+Prérequis : l'enregistrement DNS A/AAAA du domaine pointe déjà vers l'IP
+publique du serveur, et les ports 80 et 443 sont joignables depuis Internet —
+sinon la validation Let's Encrypt échoue et Caddy réessaie en boucle.
 
-   (`'*'` convient quand le proxy est le seul point d'entrée ; sinon liste les
-   IP réelles.)
+Le port de l'application (`8090`) reste volontairement lié à la **loopback** :
+Caddy l'atteint par le réseau interne, et rien ne contourne le TLS. Pour y
+accéder depuis le LAN en local : `APP_BIND=0.0.0.0 docker compose up -d`.
+
+`trustProxies` est déjà activé dans `bootstrap/app.php` — sans lui, Laravel
+lirait l'adresse du proxy au lieu de celle du visiteur, générerait des liens en
+`http://` et perdrait les cookies de session sécurisés.
 
 ## Exploitation courante
 
@@ -159,6 +251,16 @@ dev, `tests/` ou dépendance de dev embarqués dans l'image (283 Mo).
 Les trois scénarios de clé ont été testés : `APP_KEY` vide (générée puis
 identique après redémarrage), `APP_KEY` explicite (prioritaire), et absence
 totale de `.env.docker` (démarre sur les valeurs par défaut de l'image).
+
+Le fonctionnement Railway a été simulé localement (`PORT=7777`,
+`RAILWAY_PUBLIC_DOMAIN=…`) : nginx écoute bien sur le port injecté, le health
+check passe, et les URLs générées — liens et images téléversées — utilisent
+automatiquement le domaine public :
+
+```
+[entrypoint] public address: https://crm-demo.up.railway.app
+URL d'une image : https://crm-demo.up.railway.app/storage/programmes/exemple.jpg
+```
 
 ## Passer sur MySQL/PostgreSQL
 

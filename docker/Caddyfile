@@ -1,0 +1,49 @@
+# Public entry point. Caddy terminates TLS and forwards to the app container.
+#
+# Certificates are obtained and renewed automatically from Let's Encrypt for
+# {$APP_DOMAIN} — the domain's A/AAAA record must already point at this host
+# and ports 80 and 443 must be reachable from the internet, otherwise the
+# challenge fails and Caddy keeps retrying.
+#
+# APP_DOMAIN=localhost is handled too: Caddy then issues a certificate from its
+# own internal CA, which is how this file is exercised without a real domain.
+
+{
+	email {$ACME_EMAIL:}
+	# Uncomment while testing to use Let's Encrypt's staging CA, whose rate
+	# limits are far looser than production's five failures per hour.
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# Falls back to localhost (internal CA) when APP_DOMAIN is unset, so a missing
+# env file degrades to a working local instance instead of a parse error.
+{$APP_DOMAIN:localhost} {
+	encode zstd gzip
+
+	reverse_proxy app:80 {
+		# Laravel builds URLs and decides cookie security from these; they
+		# only take effect once trustProxies is set in bootstrap/app.php.
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Proto {scheme}
+
+		# Fail fast rather than hanging a browser on a wedged container.
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 30s
+		}
+	}
+
+	header {
+		# Caddy already sends HSTS with automatic HTTPS; these cover the rest.
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		# Never advertise the stack publicly.
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
