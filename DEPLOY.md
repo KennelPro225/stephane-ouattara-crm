@@ -8,13 +8,15 @@ répartir sur plusieurs instances.
 
 ```sh
 cp .env.docker.example .env.docker
-
-# Génère la clé d'application et colle-la dans APP_KEY
-docker compose run --rm app php artisan key:generate --show
-
-# Renseigne aussi APP_URL et les identifiants SMTP dans .env.docker
+# Renseigne APP_URL (l'URL publique en https) et les identifiants SMTP
 docker compose up -d --build
 ```
+
+`APP_KEY` peut rester vide : une clé est générée au premier démarrage et
+conservée dans `/data/app_key`, sur le volume de la base. Elle survit donc aux
+redémarrages et aux mises à jour, et ne disparaît qu'avec les données qu'elle
+chiffre. Pour la gérer toi-même, renseigne `APP_KEY` — une valeur explicite
+prime toujours sur la clé stockée.
 
 L'application écoute sur `http://localhost:8080`. Si le port est déjà pris :
 `APP_PORT=8099 docker compose up -d`.
@@ -56,7 +58,7 @@ pas au build : ils dépendent des variables d'environnement du conteneur.
 
 | Volume | Chemin | Contenu |
 |---|---|---|
-| `crm-database` | `/data` | La base SQLite : clients, réservations, programmes, réglages |
+| `crm-database` | `/data` | La base SQLite (clients, réservations, programmes, réglages) **et** `app_key` |
 | `crm-uploads` | `/var/www/html/storage/app/public` | Photos des programmes, galerie, images du site |
 
 Sauvegarde de la base :
@@ -102,14 +104,40 @@ docker compose exec app php artisan queue:failed   # jobs en échec
 Les migrations sont rejouées automatiquement à chaque démarrage, donc un
 `up -d --build` suffit pour livrer une mise à jour.
 
+## Dépannage
+
+**Le conteneur redémarre en boucle en répétant le même message.**
+`restart: unless-stopped` relance le conteneur tant que l'entrypoint échoue, ce
+qui inonde les logs de la même erreur. Le vrai message est le premier :
+`docker compose logs app | head -30`. Pour arrêter la boucle le temps du
+diagnostic : `docker compose stop app`.
+
+**Vérifier la configuration réellement chargée.** Chaque démarrage affiche une
+ligne de résumé — utile quand `.env.docker` est absent ou mal nommé :
+
+```
+[entrypoint] env=production debug=false url=https://… db=sqlite mailer=smtp
+```
+
+Si `url=http://localhost` alors que tu attendais ton domaine, l'env file n'est
+pas pris en compte : `docker compose config` montre ce que Compose a résolu.
+
+**Les mails de réservation ne partent pas.** Avec `MAIL_MAILER=log` (le défaut
+sans env file) ils ne sont qu'écrits dans les logs — l'entrypoint le signale au
+démarrage. Vérifie aussi `docker compose exec app php artisan queue:failed`.
+
 ## Vérifié au montage de l'image
 
 L'image a été construite et lancée réellement avant livraison : conteneur
-`healthy`, migrations jouées, `/`, `/programmes`, `/reserver-une-session`,
-`/contact`, `/login` et `/up` en 200, bundles Vite servis en
-`Cache-Control: immutable`, lien `public/storage` correct, worker drainant une
-notification `ShouldQueue` sans échec, et aucun `.env`, base de dev, `tests/`
-ou dépendance de dev embarqués dans l'image (283 Mo).
+`healthy` sans redémarrage, migrations jouées, `/`, `/programmes`,
+`/reserver-une-session`, `/contact`, `/login` et `/up` en 200, bundles Vite
+servis en `Cache-Control: immutable`, lien `public/storage` correct, worker
+drainant une notification `ShouldQueue` sans échec, et aucun `.env`, base de
+dev, `tests/` ou dépendance de dev embarqués dans l'image (283 Mo).
+
+Les trois scénarios de clé ont été testés : `APP_KEY` vide (générée puis
+identique après redémarrage), `APP_KEY` explicite (prioritaire), et absence
+totale de `.env.docker` (démarre sur les valeurs par défaut de l'image).
 
 ## Passer sur MySQL/PostgreSQL
 
