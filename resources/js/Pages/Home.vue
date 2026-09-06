@@ -59,14 +59,16 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
       <section class="container-site" style="padding-top:48px">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:end">
           <div style="max-width:44ch;min-width:0">
-            <p style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent-700);margin:0 0 24px">Coach certifié en développement personnel</p>
+            <p style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-accent-700);margin:0 0 20px">Coach certifié en développement personnel</p>
             <h1 style="font-size:clamp(28px,4.2vw,52px);margin:0 0 24px;overflow-wrap:break-word">{{ content.heroTitle }}</h1>
             <p style="font-size:15px;max-width:40ch;margin:0 0 28px;padding-left:14px;border-left:4px solid var(--c2)">{{ content.tagline }}</p>
             <div style="display:flex;flex-wrap:wrap;gap:12px">
               <a href="#apropos" class="btn btn-secondary">Qui suis-je ?</a>
               <Link :href="route('reserver-une-session')" class="btn btn-primary">Réserver une session</Link>
             </div>
-            <p class="text-muted" style="margin:36px 0 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase">↓ Scroll for more</p>
+            <a href="#apropos">
+              <p class="text-muted" style="margin:36px 0 0;font-size:11px;letter-spacing:0.12em;text-transform:uppercase">↓ Scroll for more</p>
+            </a>
           </div>
           <PlaceholderMedia :src="content.heroImage" aspect="4/5" label="portrait pro — stéphane ouattara" />
         </div>
@@ -149,7 +151,7 @@ const current = computed(() => props.testimonials[ti.value % props.testimonials.
         <div style="margin-top:48px">
           <h3 style="margin:0 0 6px;font-size:clamp(20px,3vw,28px)">Galerie de Réalisations</h3>
           <p class="text-muted" style="margin:0 0 20px;font-size:13px">Quelques moments forts de mes accompagnements</p>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px;background:var(--color-bg)">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:2px;background:var(--color-bg)">
             <figure v-for="(g, i) in gallery" :key="g.id" v-reveal="{ delay: (i % 3) * 90 }" style="background:var(--color-bg);box-shadow:0 0 0 1px var(--color-divider)">
               <PlaceholderMedia :src="g.image_url" aspect="4/3" :label="g.slot_label" />
               <figcaption :style="{ padding: '10px', color: 'var(--color-text)', fontSize: '13px', borderTop: `4px solid ${HUES[i % 4]}` }">

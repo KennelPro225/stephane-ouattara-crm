@@ -6,7 +6,10 @@ services:
     image: stephane-ouattara-crm:latest
     restart: unless-stopped
     env_file:
-      - .env.docker
+      # Optional so a fresh checkout boots with the image defaults; create it
+      # from .env.docker.example to set APP_URL and the SMTP credentials.
+      - path: .env.docker
+        required: false
     ports:
       # Bind a reverse proxy (Caddy, Traefik, nginx…) in front of this for TLS.
       # Override with APP_PORT if 8080 is taken on the host.
