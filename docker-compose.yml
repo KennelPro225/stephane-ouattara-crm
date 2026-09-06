@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: stephane-ouattara-crm:latest
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      # Bind a reverse proxy (Caddy, Traefik, nginx…) in front of this for TLS.
+      # Override with APP_PORT if 8080 is taken on the host.
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      # The SQLite database — the whole CRM lives here, back this up.
+      - crm-database:/data
+      # Uploaded programme/gallery/site images.
+      - crm-uploads:/var/www/html/storage/app/public
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/up >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  crm-database:
+  crm-uploads:

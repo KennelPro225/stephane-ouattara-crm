@@ -1,0 +1,49 @@
+# Build artefacts and dependencies — rebuilt inside the image
+/node_modules
+/vendor
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# Secrets and local state — never bake these into an image
+.env
+.env.*
+!.env.docker.example
+/auth.json
+/storage/*.key
+/database/*.sqlite
+/database/*.sqlite3
+
+# Transient runtime files (the directories themselves are recreated at startup)
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/pail
+/storage/inertia-devtools
+/bootstrap/cache/*.php
+
+# Dev-only tooling, not needed to serve the app
+/tests
+/.git
+/.github
+/.claude
+/.codex
+/.cursor
+/.idea
+/.nova
+/.vscode
+/.zed
+/.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+docker-compose*.yml
+Dockerfile
+.dockerignore
+*.md
+.DS_Store
+Thumbs.db
