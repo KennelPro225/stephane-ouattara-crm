@@ -12,8 +12,9 @@ services:
         required: false
     ports:
       # Bind a reverse proxy (Caddy, Traefik, nginx…) in front of this for TLS.
-      # Override with APP_PORT if 8080 is taken on the host.
-      - "${APP_PORT:-8080}:80"
+      # 8080 and 8000 are the ports other local projects grab first, so the
+      # default sits out of their way. Override with APP_PORT when needed.
+      - "${APP_PORT:-8090}:80"
     volumes:
       # The SQLite database — the whole CRM lives here, back this up.
       - crm-database:/data

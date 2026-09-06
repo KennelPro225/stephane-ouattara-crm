@@ -18,8 +18,8 @@ redémarrages et aux mises à jour, et ne disparaît qu'avec les données qu'ell
 chiffre. Pour la gérer toi-même, renseigne `APP_KEY` — une valeur explicite
 prime toujours sur la clé stockée.
 
-L'application écoute sur `http://localhost:8080`. Si le port est déjà pris :
-`APP_PORT=8099 docker compose up -d`.
+L'application écoute sur `http://localhost:8090`. Si ce port est déjà pris sur
+la machine : `APP_PORT=8091 docker compose up -d` (voir Dépannage).
 
 Au premier démarrage, l'entrypoint crée la base SQLite, joue les migrations,
 refait le lien `public/storage` et met les caches de config/routes/vues en
@@ -105,6 +105,27 @@ Les migrations sont rejouées automatiquement à chaque démarrage, donc un
 `up -d --build` suffit pour livrer une mise à jour.
 
 ## Dépannage
+
+**« Bind for 0.0.0.0:XXXX failed: port is already allocated »** — le conteneur
+est créé mais ne démarre jamais, donc Laravel n'a même pas l'occasion de
+booter. Ce n'est pas un problème applicatif : un autre service occupe déjà le
+port sur l'hôte. Identifier le coupable puis choisir un autre port :
+
+```sh
+docker ps --format 'table {{.Names}}\t{{.Ports}}'   # souvent un autre projet
+ss -ltn | grep ':8090'                              # ou un service hôte
+
+APP_PORT=8091 docker compose up -d
+```
+
+Le port n'a d'importance qu'en local : en production, le reverse proxy pointe
+vers ce port et c'est lui qui expose 80/443.
+
+**Le conteneur n'utilise pas le `.env` du projet — c'est voulu.** `.env` est
+exclu par `.dockerignore` : y laisser des secrets les figerait dans l'image.
+La configuration vient de `.env.docker` (via Compose) et la clé applicative de
+`/data/app_key`. La clé de ton `.env` local ne sert qu'au développement ; celle
+du conteneur est distincte, et c'est normal.
 
 **Le conteneur redémarre en boucle en répétant le même message.**
 `restart: unless-stopped` relance le conteneur tant que l'entrypoint échoue, ce
