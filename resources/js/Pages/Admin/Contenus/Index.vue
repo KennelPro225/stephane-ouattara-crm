@@ -1,6 +1,6 @@
 <script setup>
 import { Head, useForm, router } from '@inertiajs/vue3'
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { HUES } from '@/constants'
 
@@ -42,21 +42,42 @@ function saveImages () {
   })
 }
 
-const testimonialForms = reactive(
-  Object.fromEntries(props.testimonials.map((t) => [t.id, { name: t.name, role: t.role, quote: t.quote, featured: t.featured, saving: false }]))
-)
+// Edit forms are kept in sync with the list rather than built once, so an entry
+// added or removed below doesn't leave the template reading a missing key.
+const testimonialForms = reactive({})
+watch(() => props.testimonials, (list) => {
+  const ids = new Set(list.map((t) => t.id))
+  Object.keys(testimonialForms).forEach((id) => { if (!ids.has(Number(id))) delete testimonialForms[id] })
+  list.forEach((t) => {
+    if (!testimonialForms[t.id]) {
+      testimonialForms[t.id] = { name: t.name, role: t.role, quote: t.quote, featured: t.featured, saving: false }
+    }
+  })
+}, { immediate: true })
+
 function saveTestimonial (id) {
   testimonialForms[id].saving = true
   router.put(route('admin.testimonials.update', id), testimonialForms[id], {
     preserveScroll: true,
-    onFinish: () => { testimonialForms[id].saving = false },
+    onFinish: () => { if (testimonialForms[id]) testimonialForms[id].saving = false },
   })
 }
 
-const galleryForms = reactive(
-  Object.fromEntries(props.gallery.map((g) => [g.id, { title: g.title, subtitle: g.subtitle, image: null, saving: false }]))
-)
-const galleryPreviews = reactive(Object.fromEntries(props.gallery.map((g) => [g.id, g.image_url])))
+const galleryForms = reactive({})
+const galleryPreviews = reactive({})
+watch(() => props.gallery, (list) => {
+  const ids = new Set(list.map((g) => g.id))
+  Object.keys(galleryForms).forEach((id) => {
+    if (!ids.has(Number(id))) { delete galleryForms[id]; delete galleryPreviews[id] }
+  })
+  list.forEach((g) => {
+    if (!galleryForms[g.id]) {
+      galleryForms[g.id] = { title: g.title, subtitle: g.subtitle, slot_label: g.slot_label, image: null, saving: false }
+      galleryPreviews[g.id] = g.image_url
+    }
+  })
+}, { immediate: true })
+
 function onGalleryImageChange (event, id) {
   const file = event.target.files[0]
   if (file) {
@@ -69,8 +90,54 @@ function saveGallery (id) {
   router.put(route('admin.gallery.update', id), galleryForms[id], {
     forceFormData: true,
     preserveScroll: true,
-    onFinish: () => { galleryForms[id].saving = false },
+    onFinish: () => { if (galleryForms[id]) galleryForms[id].saving = false },
   })
+}
+
+// ── Ajouts ──────────────────────────────────────────────────────────────────
+const newTestimonial = useForm({ name: '', role: '', quote: '', featured: true })
+function addTestimonial () {
+  newTestimonial.post(route('admin.testimonials.store'), {
+    preserveScroll: true,
+    onSuccess: () => newTestimonial.reset(),
+  })
+}
+
+const newGalleryPreview = ref(null)
+const newGallery = useForm({ title: '', subtitle: '', slot_label: '', image: null })
+function onNewGalleryImage (event) {
+  const file = event.target.files[0]
+  if (file) {
+    newGallery.image = file
+    newGalleryPreview.value = URL.createObjectURL(file)
+  }
+}
+function addGallery () {
+  newGallery.post(route('admin.gallery.store'), {
+    forceFormData: true,
+    preserveScroll: true,
+    onSuccess: () => { newGallery.reset(); newGalleryPreview.value = null },
+  })
+}
+
+// ── Suppressions ────────────────────────────────────────────────────────────
+// Two-step inline confirmation instead of a native confirm() dialog: it stays
+// inside the design system and never blocks the page.
+const pendingDelete = ref(null)
+let pendingTimer
+function armDelete (key) {
+  pendingDelete.value = key
+  clearTimeout(pendingTimer)
+  pendingTimer = setTimeout(() => { pendingDelete.value = null }, 5000)
+}
+function removeItem (kind, id) {
+  const key = `${kind}-${id}`
+  if (pendingDelete.value !== key) return armDelete(key)
+
+  clearTimeout(pendingTimer)
+  pendingDelete.value = null
+  const name = kind === 't' ? 'admin.testimonials.destroy' : 'admin.gallery.destroy'
+  router.delete(route(name, id), { preserveScroll: true })
 }
 
 const fields = [
@@ -163,8 +230,40 @@ const fields = [
           <div class="field"><label>Rôle</label><input v-model="testimonialForms[t.id].role" class="input" type="text"></div>
         </div>
         <div class="field"><label>Témoignage</label><textarea v-model="testimonialForms[t.id].quote" class="input" style="min-height:88px"></textarea></div>
-        <button type="button" class="btn btn-secondary" :disabled="testimonialForms[t.id].saving" @click="saveTestimonial(t.id)">Enregistrer</button>
+        <div style="display:flex;gap:8px;margin-top:auto">
+          <button type="button" class="btn btn-secondary" style="flex:1" :disabled="testimonialForms[t.id].saving" @click="saveTestimonial(t.id)">Enregistrer</button>
+          <button type="button" class="btn btn-ghost" style="border:1px solid var(--color-divider)"
+            :style="pendingDelete === `t-${t.id}` ? 'background:var(--color-accent-700);color:var(--color-bg);border-color:var(--color-accent-700)' : 'color:var(--color-neutral-700)'"
+            @click="removeItem('t', t.id)">
+            {{ pendingDelete === `t-${t.id}` ? 'Confirmer ?' : 'Supprimer' }}
+          </button>
+        </div>
       </div>
+
+      <!-- Ajout d'un témoignage -->
+      <form style="box-shadow:0 0 0 2px var(--c3);padding:16px;display:flex;flex-direction:column;gap:10px" @submit.prevent="addTestimonial">
+        <span class="text-muted" style="font-size:11px;letter-spacing:0.1em">NOUVEAU TÉMOIGNAGE</span>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+          <div class="field">
+            <label for="nt_name">Nom *</label>
+            <input id="nt_name" v-model="newTestimonial.name" class="input" type="text" placeholder="Aminata K.">
+            <p v-if="newTestimonial.errors.name" class="field-error">{{ newTestimonial.errors.name }}</p>
+          </div>
+          <div class="field">
+            <label for="nt_role">Rôle</label>
+            <input id="nt_role" v-model="newTestimonial.role" class="input" type="text" placeholder="Parent d'élève, Abidjan">
+          </div>
+        </div>
+        <div class="field">
+          <label for="nt_quote">Témoignage *</label>
+          <textarea id="nt_quote" v-model="newTestimonial.quote" class="input" style="min-height:88px" placeholder="Ce que la personne a dit…"></textarea>
+          <p v-if="newTestimonial.errors.quote" class="field-error">{{ newTestimonial.errors.quote }}</p>
+        </div>
+        <label class="radio">
+          <input v-model="newTestimonial.featured" type="checkbox"><span class="dot" style="border-radius:2px"></span>Afficher sur le site
+        </label>
+        <button type="submit" class="btn btn-primary" style="margin-top:auto" :class="{ 'btn-loading': newTestimonial.processing }" :disabled="newTestimonial.processing">Ajouter</button>
+      </form>
     </div>
 
     <h2 style="font-size:20px;margin:0 0 16px;border-left:6px solid var(--c4);padding-left:12px">Galerie</h2>
@@ -180,8 +279,40 @@ const fields = [
           <label>Image</label>
           <input class="input" type="file" accept="image/png,image/jpeg,image/webp" @change="onGalleryImageChange($event, g.id)">
         </div>
-        <button type="button" class="btn btn-secondary" :disabled="galleryForms[g.id].saving" @click="saveGallery(g.id)">Enregistrer</button>
+        <div style="display:flex;gap:8px;margin-top:auto">
+          <button type="button" class="btn btn-secondary" style="flex:1" :disabled="galleryForms[g.id].saving" @click="saveGallery(g.id)">Enregistrer</button>
+          <button type="button" class="btn btn-ghost" style="border:1px solid var(--color-divider)"
+            :style="pendingDelete === `g-${g.id}` ? 'background:var(--color-accent-700);color:var(--color-bg);border-color:var(--color-accent-700)' : 'color:var(--color-neutral-700)'"
+            @click="removeItem('g', g.id)">
+            {{ pendingDelete === `g-${g.id}` ? 'Confirmer ?' : 'Supprimer' }}
+          </button>
+        </div>
       </div>
+
+      <!-- Ajout d'une image de galerie -->
+      <form style="box-shadow:0 0 0 2px var(--c4);padding:16px;display:flex;flex-direction:column;gap:10px" @submit.prevent="addGallery">
+        <span class="text-muted" style="font-size:11px;letter-spacing:0.1em">NOUVELLE IMAGE</span>
+        <div class="grayscale placeholder-media" style="aspect-ratio:16/9" :style="newGalleryPreview ? 'background:none;filter:none' : ''">
+          <img v-if="newGalleryPreview" :src="newGalleryPreview" alt="" style="width:100%;height:100%;object-fit:cover">
+          <span v-else>aperçu</span>
+        </div>
+        <div class="field">
+          <label for="ng_title">Titre *</label>
+          <input id="ng_title" v-model="newGallery.title" class="input" type="text" placeholder="Coaching Individuel">
+          <p v-if="newGallery.errors.title" class="field-error">{{ newGallery.errors.title }}</p>
+        </div>
+        <div class="field">
+          <label for="ng_subtitle">Légende</label>
+          <input id="ng_subtitle" v-model="newGallery.subtitle" class="input" type="text" placeholder="Développement personnel et professionnel">
+        </div>
+        <div class="field">
+          <label for="ng_image">Image *</label>
+          <input id="ng_image" class="input" type="file" accept="image/png,image/jpeg,image/webp" @change="onNewGalleryImage">
+          <p class="text-muted" style="margin:6px 0 0;font-size:11px">JPG, PNG ou WEBP, 4 Mo maximum.</p>
+          <p v-if="newGallery.errors.image" class="field-error">{{ newGallery.errors.image }}</p>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:auto" :class="{ 'btn-loading': newGallery.processing }" :disabled="newGallery.processing">Ajouter</button>
+      </form>
     </div>
   </AdminLayout>
 </template>

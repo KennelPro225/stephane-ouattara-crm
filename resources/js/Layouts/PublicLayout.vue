@@ -36,10 +36,8 @@ function closeDrawer () {
             style="text-decoration:none;color:inherit;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">
             CRM admin
           </Link>
-          <Link v-else :href="route('login')"
-            style="text-decoration:none;color:inherit;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;font-family:var(--font-heading);font-weight:600">
-            Connexion
-          </Link>
+          <!-- Aucun lien de connexion pour les visiteurs : le back-office ne
+               s'annonce pas publiquement, il reste joignable via /login. -->
           <Link :href="route('reserver-une-session')" class="btn btn-primary">Réserver une session</Link>
         </nav>
 
@@ -63,9 +61,9 @@ function closeDrawer () {
           style="text-decoration:none;color:inherit;font-family:var(--font-heading);font-weight:800;font-size:24px;padding:14px 0;border-bottom:1px solid var(--color-divider);display:flex;align-items:baseline;gap:12px;min-height:44px">
           <span style="font-size:11px;font-weight:400;color:var(--color-accent)">0{{ i + 1 }}</span>{{ l.label }}
         </Link>
-        <Link :href="page.props.auth.user ? route('admin.dashboard') : route('login')" @click="closeDrawer"
+        <Link v-if="page.props.auth.user" :href="route('admin.dashboard')" @click="closeDrawer"
           style="text-decoration:none;color:inherit;font-family:var(--font-heading);font-weight:800;font-size:24px;padding:14px 0;border-bottom:1px solid var(--color-divider);display:flex;align-items:baseline;gap:12px;min-height:44px">
-          <span style="font-size:11px;font-weight:400;color:var(--color-accent)">0{{ navLinks.length + 1 }}</span>{{ page.props.auth.user ? 'CRM admin' : 'Connexion' }}
+          <span style="font-size:11px;font-weight:400;color:var(--color-accent)">0{{ navLinks.length + 1 }}</span>CRM admin
         </Link>
         <Link :href="route('reserver-une-session')" class="btn btn-primary btn-block" style="margin-top:12px" @click="closeDrawer">Réserver une session</Link>
         <p class="text-muted" style="margin-top:auto;font-size:11px;line-height:1.6">Cabinet OMSY EDUC — Cocody, Abidjan<br>{{ page.props.content.phone }}</p>

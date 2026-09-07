@@ -49,6 +49,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/contenus', [Admin\ContentController::class, 'index'])->name('content.index');
     Route::put('/contenus', [Admin\ContentController::class, 'updateSettings'])->name('content.update');
     Route::post('/contenus/images', [Admin\ContentController::class, 'updateImages'])->name('content.images');
+    Route::post('/contenus/testimonials', [Admin\ContentController::class, 'storeTestimonial'])->name('testimonials.store');
     Route::put('/contenus/testimonials/{testimonial}', [Admin\ContentController::class, 'updateTestimonial'])->name('testimonials.update');
+    Route::delete('/contenus/testimonials/{testimonial}', [Admin\ContentController::class, 'destroyTestimonial'])->name('testimonials.destroy');
+
+    Route::post('/contenus/gallery', [Admin\ContentController::class, 'storeGallery'])->name('gallery.store');
     Route::put('/contenus/gallery/{gallery}', [Admin\ContentController::class, 'updateGallery'])->name('gallery.update');
+    Route::delete('/contenus/gallery/{gallery}', [Admin\ContentController::class, 'destroyGallery'])->name('gallery.destroy');
 });

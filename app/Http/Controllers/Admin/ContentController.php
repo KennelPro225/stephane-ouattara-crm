@@ -82,6 +82,27 @@ class ContentController extends Controller
         return back()->with('success', 'Images mises à jour.');
     }
 
+    public function storeTestimonial(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'role' => ['nullable', 'string', 'max:255'],
+            'quote' => ['required', 'string', 'max:2000'],
+            'featured' => ['boolean'],
+        ]);
+
+        Testimonial::create($validated + ['sort_order' => $this->nextSortOrder(Testimonial::class)]);
+
+        return back()->with('success', 'Témoignage ajouté.');
+    }
+
+    public function destroyTestimonial(Testimonial $testimonial): RedirectResponse
+    {
+        $testimonial->delete();
+
+        return back()->with('success', 'Témoignage supprimé.');
+    }
+
     public function updateTestimonial(Request $request, Testimonial $testimonial): RedirectResponse
     {
         $validated = $request->validate([
@@ -96,11 +117,38 @@ class ContentController extends Controller
         return back()->with('success', 'Témoignage mis à jour.');
     }
 
+    public function storeGallery(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'subtitle' => ['nullable', 'string', 'max:255'],
+            'slot_label' => ['nullable', 'string', 'max:255'],
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $validated['image_path'] = $this->images->store($request->file('image'), 'gallery');
+        unset($validated['image']);
+
+        GalleryItem::create($validated + ['sort_order' => $this->nextSortOrder(GalleryItem::class)]);
+
+        return back()->with('success', 'Image ajoutée à la galerie.');
+    }
+
+    public function destroyGallery(GalleryItem $gallery): RedirectResponse
+    {
+        // Drop the file too, otherwise the volume keeps growing with orphans.
+        $this->images->delete($gallery->image_path);
+        $gallery->delete();
+
+        return back()->with('success', 'Élément de galerie supprimé.');
+    }
+
     public function updateGallery(Request $request, GalleryItem $gallery): RedirectResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
+            'slot_label' => ['nullable', 'string', 'max:255'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
@@ -112,6 +160,12 @@ class ContentController extends Controller
         $gallery->update($validated);
 
         return back()->with('success', 'Élément de galerie mis à jour.');
+    }
+
+    /** New entries land at the end of the public list. */
+    private function nextSortOrder(string $model): int
+    {
+        return ((int) $model::max('sort_order')) + 1;
     }
 
     private function imageUrl(?string $path): ?string
